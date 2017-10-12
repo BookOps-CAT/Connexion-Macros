@@ -23,19 +23,19 @@ Alternatively copy the individual macro code directly from the .BAS file using t
 12. After the macro is saved then it can be mapped to a user tool, key, or key chord as usual (optional).
 
 ## Macros
-1.Brooklyn.mbk
-	*CallNum
-	*ToExcel
-2.NYPL.mbk
-	*CallNum
-	*MusicCD
-3.CAT.mbk
-	*BibcoEval
-	*UpdateExport
-4.ACQ.mbk
-	*RLOrderRec
-5.NewMacros.mbk
-	*ACQupdater
-	*CATupdater  
+1. Brooklyn.mbk
+	* CallNum (BPLCallNum.bas)
+	* ToExcel
+2. NYPL.mbk
+	* CallNum
+	* MusicCD
+3. CAT.mbk
+	* BibcoEval
+	* UpdateExport
+4. ACQ.mbk
+	* RLOrderRec
+5. NewMacros.mbk
+	* ACQupdater
+	* CATupdater  
 ## License
-[MIT]((https://opensource.org/licenses/MIT)
+[MIT](https://opensource.org/licenses/MIT)
