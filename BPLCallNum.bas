@@ -11,6 +11,7 @@
 'v.1.7 changes:
 '  *improved and simplified diactriticts function
 
+
 Declare Function Dewey(sAudn,sCallType)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
 Declare Sub CutterArray(sCutterArr,sCallType,sDewey)
