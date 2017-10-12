@@ -23,18 +23,18 @@ Alternatively copy the individual macro code directly from the .BAS file using t
 12. After the macro is saved then it can be mapped to a user tool, key, or key chord as usual (optional).
 
 ## Macros
-1. Brooklyn.mbk
+1. Brooklyn.mbk macrobook
 	* CallNum (BPLCallNum.bas)
 	* ToExcel (needs updating)
-2. NYPL.mbk
+2. NYPL.mbk macrobook
 	* CallNum (NYPLCallNum.bas)
 	* MusicCD (NYPLMusicCD.bas)
-3. CAT.mbk
+3. CAT.mbk macrobook
 	* BibcoEval (CATBibcoEval.bas)
 	* UpdateExport (CATUpdateExport.bas)
-4. ACQ.mbk
+4. ACQ.mbk macrobook
 	* RLOrderRec (ACQRLOrderRec.bas)
-5. NewMacros.mbk
+5. NewMacros.mbk macrobook
 	* ACQupdater (NewMacrosACQupdater.bas)
 	* CATupdater (NewMacrosCATupdater.bas)
 ## License
