@@ -7,7 +7,7 @@ To install copy the macro book (.mbk file in /macrobooks folder) to the "C:\Prog
 
 Simple as that!
 ### Hard Way (Copy and Paste from Source)
-Alternatively copy the individual macro code directly from the .BAS file using the macro editor in Connexion.
+Alternatively copy the individual macro code directly from the .BAS file (/source directory) using the macro editor in Connexion.
 
 1. Tools > Macros > Manage (CTRL-ALT-SHIFT-G)
 2. Select a local macro book
