@@ -25,17 +25,17 @@ Alternatively copy the individual macro code directly from the .BAS file using t
 ## Macros
 1. Brooklyn.mbk
 	* CallNum (BPLCallNum.bas)
-	* ToExcel
+	* ToExcel (needs updating)
 2. NYPL.mbk
-	* CallNum
-	* MusicCD
+	* CallNum (NYPLCallNum.bas)
+	* MusicCD (NYPLMusicCD.bas)
 3. CAT.mbk
-	* BibcoEval
-	* UpdateExport
+	* BibcoEval (CATBibcoEval.bas)
+	* UpdateExport (CATUpdateExport.bas)
 4. ACQ.mbk
-	* RLOrderRec
+	* RLOrderRec (ACQRLOrderRec.bas)
 5. NewMacros.mbk
-	* ACQupdater
-	* CATupdater  
+	* ACQupdater (NewMacrosACQupdater.bas)
+	* CATupdater (NewMacrosCATupdater.bas)
 ## License
 [MIT](https://opensource.org/licenses/MIT)
