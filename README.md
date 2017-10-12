@@ -3,7 +3,7 @@ A reporsitory of the cataloging department Connexion Macros.
 
 ## Installation
 ### Easy Way
-To install copy the macro book (.mbk file in /macrobooks folder) to the "C:\Program Files (x86)\OCLC\Connexion\Program\Macros" directory
+To install copy the macro book (.mbk file in /macrobooks folder) to the "C:\Program Files (x86)\OCLC\Connexion\Program\Macros" directory.
 
 Simple as that!
 ### Hard Way (Copy and Paste from Source)
