@@ -1,5 +1,5 @@
 'MacroName:BPL CallNum macro
-'MacroDescription: Assists cataloger in call number creation for BPL catalog; 
+'MacroDescription: Revised version of CallNum macro; 
 '                  includes format, audience, call type and output selection;
 '                  includes call number detection, local Dewey rules, call number conflict routine;
 '                  supports selection of names for the call number based on multiple 6xx fields,
@@ -7,10 +7,15 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: August 29, 2017 (v. 1.7)
+'Last updated: September 14, 2018 (v. 1.9)
 'v.1.7 changes:
 '  *improved and simplified diactriticts function
-
+'v.1.8 changes:
+'  * DVD call number cutter includes full first word of title
+'  * bug fix: underscore nonspacing character (Chr(246)) handling fixed
+'v.1.9 changes:
+'  * Readalong format support
+'  * Chinese lit time table handling added
 
 Declare Function Dewey(sAudn,sCallType)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
@@ -69,7 +74,7 @@ Sub Main
       End If
       s300 = UCase(s300)
       
-      ReDim sFormat(11)
+      ReDim sFormat(12)
          sFormat(0) = " "
          sFormat(1) = "AUDIO"
          sFormat(2) = "BOOK & CD"
@@ -81,7 +86,8 @@ Sub Main
          sFormat(8) = "LIB"
          sFormat(9) = "Mu"
          sFormat(10) = "NM"
-         sFormat(11) = "WEB SITE"
+         sFormat(11) = "READALONG"
+         sFormat(12) = "WEB SITE"
       ReDim sAudience(1)
          sAudience(0) = "JUVENILE"
          sAudience(1) = "ADULT/YOUNG"
@@ -150,7 +156,9 @@ Sub Main
          Else
             dCallNum.Type = 2
          End If
-         If InStr(s300, "CM") <> 0 Or InStr(s300, "P.") <> 0 Or InStr(s300, "PAGES") <> 0 Or InStr(s300, "BOOK") <> 0 Then
+         If InStr(s300, "AUDIO-ENABLED BOOK") <> 0 Or InStr(s300, "AUDIO ENABLED BOOK") <> 0 Then
+            dCallNum.sFormat = 11
+         ElseIf InStr(s300, "CM") <> 0 Or InStr(s300, "P.") <> 0 Or InStr(s300, "PAGES") <> 0 Or InStr(s300, "BOOK") <> 0 Then
             dCallNum.sFormat = 2
          Else
             dCallNum.sFormat = 1
@@ -162,7 +170,7 @@ Sub Main
          dCallNum.sFormat = 6
          dCallNum.Type = 1
       ElseIf sRecType = "m" And sItemForm = "o" Then
-         dCallNum.sFormat = 11
+         dCallNum.sFormat = 12
          dCallNum.Type = 2
       ElseIf sRecType = "m" And sItemForm = "q" Then
          dCallNum.sFormat = 5
@@ -362,7 +370,7 @@ Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
       Goto Rule1
    End If
    If sCallType = "feat" Then
-      Goto Rule7
+      Goto Rule4
    End If
    If sCallType = "fic" Then
       Goto Rule2
@@ -421,7 +429,7 @@ Rule3:
    Goto Done
    
 Rule4:
-'full 1st word or title
+'full 1st word of title
    If InStr(sCutterArr, "245_") <> 0 Then
       start_point = InStr(sCutterArr, "245_")
       temp$ = Mid(sCutterArr, start_point + 4)
@@ -672,12 +680,12 @@ Sub Diacritics(sNameTitle)
       CheckChar = Mid(sNameTitle, i, 1)
       
       Select Case CheckChar
-         'characters above letter (example: acute, breve, umlaut, etc.)
+         'characters above letter (example: acute, breve, umlaut, macron, etc.)
          Case Chr(226), Chr(174), Chr(176), Chr(230), Chr(239), Chr(234), Chr(227), Chr(238), Chr(250), Chr(251), Chr(225), Chr(96), Chr(233), Chr(254), Chr(237), Chr(235), Chr(236), Chr(229), Chr(167), Chr(228), Chr(126), Chr(183), Chr(232), Chr(231)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
             i = i - 1
          'characters below letter (example: cedilla, hooks, etc.)
-         Case Chr(240), Chr(248), Chr(247), Chr(241), Chr(244), Chr(242), Chr(243), Chr(245), Chr(249) 
+         Case Chr(240), Chr(248), Chr(247), Chr(241), Chr(244), Chr(242), Chr(243), Chr(245), Chr(249), Chr(246)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
             i = i - 1
          'Ds
@@ -705,9 +713,9 @@ Sub Diacritics(sNameTitle)
          Case Chr(176), Chr(174), Chr(167)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
             i = i - 1
-         Case ":", ";", "/"
-            sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
-            i = i - 1
+'         Case ":", ";", "/"
+'            sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
+'            i = i - 1
           
       End Select
       i = i + 1   
@@ -987,6 +995,26 @@ Sub LocalDewey(s082,sCallType)
          End If
       End If
    End If
+   'removes time periods from Chinese literature call numbers
+   If sFirstFiveDig = "895.1" And InStr("12345678", s6thDig) <> 0 Then
+      If InStr("123456", s7thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            lt$ = Left(s082, 6)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + "0" + rt$
+         Else
+            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            s082 = Left(s082, 6)
+         End If
+      End If
+   End If
    'removes time periods from other Germanic literatures call numbers (includes Yiddish, Swedish, Old Norse, Icelandic)
    If sFirstThreeDig = "839" And InStr("124567", s5thDig) <> 0 Then
       If InStr("12345678", s6thDig) <> 0 Then
@@ -1089,7 +1117,7 @@ End Sub
 
 '################################################################################
 
-Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType,sItemForm, sLitF, sTMat, sLTxt, f, a)
+Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType, sItemForm, sLitF, sTMat, sLTxt, f, a)
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
    Dim s082$
@@ -1099,7 +1127,7 @@ Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType,sItemForm, sLitF, sTMat
    bool082 = CS.GetField("082", 1, s082)
 AudnCheck:
    If sCallType = "easy" Then
-      If InStr("ab", sAudn) <> 0 and sAudn <> "" Then
+      If InStr("ab", sAudn) <> 0 And sAudn <> "" Then
          If bool082 = TRUE Then
             If InStr(s082, "[FIC]") <> 0 Then
                MsgBox "AUDIENCE conflict: The material is classed as fiction for older children (082 field - [Fic]). Please verify your selection."
@@ -1110,11 +1138,14 @@ AudnCheck:
       Else
          MsgBox "AUDIENCE conflict: Record not coded as easy material (fixed field Audn). Please verify your selection."
       End If
+      If f = 11 Then
+         MsgBox "AUDIENCE conflict: J-E call numbers can not be used for Readalong books. Use the J prefix instead"
+      End If
    Else
       If InStr("cdefgj", sAudn) <> 0 Or sAund = "" Then
          If InStr("cj", sAudn) <> 0 And sAudn <> "" Then
             If a = 0 Then
-               If InStr(s082, "[E]") <> 0 Then
+               If InStr(s082, "[E]") <> 0 And f <> 11 Then
                   MsgBox "AUDIENCE conflict: The material is classed as easy fiction (082 field - [E]). Please verify your selection."
                Else
                   Goto LitCheck
@@ -1131,6 +1162,9 @@ AudnCheck:
          End If
       Else
          MsgBox "AUDIENCE conflict: Record coded as material for young readers, age 0-8 (fixed field Audn-a,b). Please consider using J-E call number."
+      End If
+      If a = 1 and f = 11 Then
+         MsgBox "AUDIENCE conflict: Readalong books are intended for juvenile readers and call number must include J prefix."
       End If
    End If
 LitCheck:
@@ -1201,6 +1235,10 @@ FormCheck:
          MsgBox "FORMAT conflict: bibliographical record type is not for microfilm or mirofiche. Please verify your selection."
       End If
    ElseIf f = 11 Then
+      If sRecType <> "i" Then
+         MsgBox "FORMAT conflict: bibliographical record type is not for audio-enabled books. Please verify your selection."
+      End If   
+   ElseIf f = 12 Then
       If sRecType <> "m" And sItemForm <> "o" Then
          MsgBox "FORMAT conflict: bibliographical record type is not for electronic remote access resources. Please verify your selection."
       End If   
@@ -1373,7 +1411,8 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
          If Mid(subhead$,5,1) = "0" Or Mid(subhead$,5,1) = "1" Or InStr(subhead$, Chr(223) & "2 gsafd") _
           Or InStr(subhead$, Chr(223) & "2 fast") Or InStr(subhead$, Chr(223) & "2 lcsh") _
           Or InStr(subhead$, Chr(223) & "2 bidex") Or InStr(subhead$, Chr(223) & "2 lcgft") _
-          Or InStr(subhead$, Chr(223) & "2 gmgpc") Or InStr(subhead$, Chr(223) & "2 lctgm")Then
+          Or InStr(subhead$, Chr(223) & "2 gmgpc") Or InStr(subhead$, Chr(223) & "2 lctgm") _
+          Or InStr(subhead$, Chr(223) & "2 aat") Then
             If InStr(subhead$, Chr(223) & "v Popular works") <> 0 Then
                place = InStr(subhead$, Chr(223) & "v Popular works")
                lt$ = Left(subhead$, place - 2)
@@ -1419,4 +1458,3 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    CS.EndRecord
    
 End Sub
-
