@@ -1,9 +1,9 @@
-'MacroName:NYPL CallNum v.2.5.4
+'MacroName:NYPL CallNum v.2.5.7
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
 '                  Macro handles call number patterns for English and World Lanugages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfielf $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: August 29, 2017
+'Latest update: September 14, 2018
 
 'v.2.5.4 update details:
 '  *bug fix: removes flase fiction flag for Graphic Novels
@@ -11,6 +11,18 @@
 '  *bug fix: corrected broken format error flags
 '  *rules change: authors name for literary collection changed from $b to $c
 '  *improvement: added validation error flag for Dewey + Name call numbers that are not in 7xx or 8xx range
+
+'v.2.5.5 update details:
+'  * bug fix: proper behaviour if no bibliographic record displayed
+'  * added flag for short stories collections
+
+'v.2.5.6 update details:
+'  * DVD & Bluray call number cutter includes full first word
+'  * bug fix: underscore nonspacing character (Chr(246)) handling fixed
+
+'v 2.5.7 update details:
+'  * Readalong call number prefix added
+'  * Validation flats added for Readalong call numbers
 
 Option Explicit
 
@@ -30,7 +42,7 @@ Sub Main
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
-      Dim s538$, s948$, sAudn$, sAudnLangPrefix$, sBiog$, sCallType$, sCont$, sCutter$, sElemArr$, _
+      Dim s300$, s538$, s948$, sAudn$, sAudnLangPrefix$, sBiog$, sCallType$, sCont$, sCutter$, sElemArr$, _
          sFormatPrefix$, sItemForm$, sLang$, sLitF$, sNameChoice$, sRecType$, sTMat$
       Dim bool538
       Dim a, f, n100, n600 As Integer
@@ -53,8 +65,13 @@ Sub Main
          CS.GetFixedField "LitF", sLitF
          CS.GetFixedField "Biog", sBiog
       End If
+      CS.GetFieldUnicode "300", 1, s300
+      If InStr(s300, Chr(223) & "e") <> 0 Then
+         s300 = Mid(s300, InStr(s300, Chr(223) & "e"))
+      End If
+      s300 = UCase(s300)
       
-      ReDim sFormat(10)
+      ReDim sFormat(11)
          sFormat(0) = " "
          sFormat(1) = "BLURAY"
          sFormat(2) = "CD"
@@ -66,6 +83,7 @@ Sub Main
          sFormat(8) = "JOBS"
          sFormat(9) = "LG PRINT"
          sFormat(10) = "YR"
+         sFormat(11) = "READALONG"
       ReDim sAudience(1)
          sAudience(0) = "JUVENILE"
          sAudience(1) = "ADULT"
@@ -116,10 +134,10 @@ Sub Main
          OptionButton  125,  135, 70, 14, "&WESTERN"
          OptionButton  125,  155, 70, 14, "M&OVIE"
          OptionButton  125,  175, 70, 14, "&TV"
-         DropListBox  18, 10, 55, 115, sFormat(), .sFormat
-         Text 78, 12, 70, 14, "FORMAT"
-         DropListBox  18, 30, 55, 40, sAudience(), .sAudience
-         Text 80, 32, 78, 14, "AUDIENCE"
+         DropListBox  18, 10, 61, 115, sFormat(), .sFormat
+         Text 81, 12, 70, 14, "FORMAT"
+         DropListBox  18, 30, 61, 40, sAudience(), .sAudience
+         Text 81, 32, 78, 14, "AUDIENCE"
          Textbox 130, 12, 20, 15, .sInitials
          Text 160, 14, 30, 30, "INITIALS"
          'Text 150, 12, 70, 14, "Output:"
@@ -141,7 +159,11 @@ Sub Main
             dCallNum.sFormat = 9
          End If
       ElseIf sRecType = "i" Then
-         dCallNum.sFormat = 2
+         If InStr(s300, "AUDIO-ENABLED BOOK") <> 0 Or InStr(s300, "AUDIO ENABLED BOOK") <> 0 Then
+            dCallNum.sFormat = 11
+         Else
+            dCallNum.sFormat = 2
+         End If
       ElseIf sRecType = "j" Then
          MsgBox "Please consider using NYPLMusicCD macro instead. The record appeared to be a music CD"
       ElseIf sRecType = "g" And sTMat = "v" Then
@@ -280,11 +302,12 @@ Sub Main
       
    Else
       MsgBox "INFO: A bibliographic record must be displayed in order to use this macro."
-      Goto Done
+      Goto ReallyDone
    End If
    
 Done:
    Call Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s948)
+ReallyDone:
 End Sub
 
 '########################################################################
@@ -332,7 +355,7 @@ Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
    ElseIf sCallType = "bio" Or sCallType = "den" Then
       Goto Rule3
    ElseIf sCallType = "mov" Or sCallType = "tvs" Then
-      Goto Rule4
+      Goto Rule5
    End If
   
 Rule1:
@@ -405,7 +428,7 @@ Rule3:
    End If
    Goto Done
 Rule4:
-   'mov, tvs: Latin - first letter of 245 ; Non-Latin - 11 characters of 245
+   'mov, tvs: Latin - first letter of 245 ; Non-Latin - 11 characters of 245; obsolete efective 08/01/2018 (v.2.5.6)
    If InStr(sElemArr, "245: ") <> 0 Then
       start_point = InStr(sElemArr, "245: ")
       sTemp = Mid(sElemArr, start_point)
@@ -423,7 +446,7 @@ Rule4:
    Goto Done
 Rule5:
    'mov, tvs: Latin & Non-Latin - first word of 245
-   'proposed change to cuttering rules for feature movies and TV shows; not in effect yet
+   'proposed change to cuttering rules for feature movies and TV shows; effective 08/01/2018 (v.2.5.6)
    If InStr(sElemArr, "245: ") <> 0 Then
       start_point = InStr(sElemArr, "245: ")
       sTemp = Mid(sElemArr, start_point)
@@ -740,12 +763,12 @@ Sub Diacritics(sNameTitle)
    While i <= Len(sNameTitle)
       CheckChar = Mid(sNameTitle, i, 1)
       Select Case CheckChar
-         'characters above letter (example: acute, breve, umlaut, etc.)
+         'characters above letter (example: acute, breve, umlaut, macron, etc.)
          Case Chr(226), Chr(174), Chr(176), Chr(230), Chr(239), Chr(234), Chr(227), Chr(238), Chr(250), Chr(251), Chr(225), Chr(96), Chr(233), Chr(254), Chr(237), Chr(235), Chr(236), Chr(229), Chr(167), Chr(228), Chr(126), Chr(183), Chr(232), Chr(231)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
             i = i - 1
-         'characters below letter (example: cedilla, hooks, etc.)
-         Case Chr(240), Chr(248), Chr(247), Chr(241), Chr(244), Chr(242), Chr(243), Chr(245), Chr(246), Chr(249) 
+         'characters below letter (example: cedilla, hooks, underscore, etc.)
+         Case Chr(240), Chr(248), Chr(247), Chr(241), Chr(244), Chr(242), Chr(243), Chr(245), Chr(246), Chr(249), Chr(246)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
             i = i - 1
          'Ds
@@ -775,9 +798,10 @@ Sub Diacritics(sNameTitle)
          Case "'", Chr(176), Chr(174), Chr(167)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
             i = i - 1
-         Case ".", ":", ";", "/"
-            sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
-            i = i - 1
+' commmented our for update v. 2.5.6. - these characters are allowed in cutters for visual materials effective 08/01/2018
+'         Case ".", ":", ";", "/"
+'            sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
+'            i = i - 1
                  
       End Select
       i = i + 1   
@@ -862,6 +886,14 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
       If sCallType <> "fic" Or a <> 0 Or InStr("bcj", sAudn) = 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type. YR format is valid only for juvenile fiction call number"
       End If
+   ElseIf f = 11 Then
+      'format READALONG
+      If sCallType <> "fic" And sCallType <> "dew" And sCallType <> "bio" Then
+         MsgBox "FORMAT conflict: Please verify format selection and call number type. READALONG format is valid only for juvenile fiction, dewey, and biography call numbers"
+      End If
+      If a = 1 Then
+         MsgBox "AUDIENCE conflict: Please verify audience selection and format. READALONG format is valid only for juvenile materials."
+      End If
    End If
    
    'content validation
@@ -888,6 +920,8 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
             MsgBox "WARNING: Call number Dewey + Name should be used only in 7xx and 8xx Dewey ranges. Please verify your selection."
          End If
       End If
+      
+      'short stories collections warning flag
    End If
 
 
@@ -927,4 +961,3 @@ Sub InsertCallNum(s948, f, sInitials)
    CS.SetField 1, s901
  CS.EndRecord
 End Sub
-         
