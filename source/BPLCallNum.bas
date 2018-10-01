@@ -1152,7 +1152,7 @@ End Sub
 Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType, sItemForm, sLitF, sTMat, sLTxt, f, a)
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
-   Dim s082$
+   Dim s082$, s338$, s347$, sFields$
    'f - numerical code of format
    'a - numerical code of audience
 
@@ -1274,6 +1274,28 @@ FormCheck:
       If sRecType <> "m" And sItemForm <> "o" Then
          MsgBox "FORMAT conflict: bibliographical record type is not for electronic remote access resources. Please verify your selection."
       End If   
+   End If
+   
+   'check if material format is correct for DVD
+   If sRecType = "g" Then
+      n = 1
+      sFields = ""
+      nBool = CS.GetField("347", n, s347)
+      Do While nBool = TRUE
+         sFields = sFields + s347
+         n = n + 1
+         nBool = CS.GetField("347", n, s347)
+      Loop
+      n = 1
+      nBool = CS.GetField("338", n, s338)
+      Do While nBool = TRUE
+         sFields = sFields + s338
+         n = n + 1
+         nBool = CS.GetField("338", n, s338)
+      Loop
+      If InStr(sFields, "DVD") = 0 And InStr(sFields, "videodisc") = 0 Then
+         MsgBox "FORMAT conflict: record seems to indicate a different material type than DVD. Please verify your selection."
+      End If
    End If
 CutterCheck:
    If InStr("0123456789", sCutter) <> 0 Then
