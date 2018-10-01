@@ -7,7 +7,7 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: September 14, 2018 (v. 1.9)
+'Last updated: September 28, 2018 (v. 2.0)
 'v.1.7 changes:
 '  *improved and simplified diactriticts function
 'v.1.8 changes:
@@ -16,6 +16,8 @@
 'v.1.9 changes:
 '  * Readalong format support
 '  * Chinese lit time table handling added
+'v.2.0 changes:
+'  * feature DVD call number includes one of two type prefixes: TV and MOVIE
 
 Declare Function Dewey(sAudn,sCallType)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
@@ -27,12 +29,13 @@ Declare Sub InsertCallNum(s099,sRecType,sFormItem,sLang,sAudn,f, sInitials)
 Declare Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType,sItemForm, sLitF, sTMat, sLTxt, f, a)
 
 
+
 Sub Main
 
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
-      Dim s099$, s300$, sCallType$, sAudn$, sLang$, sRecType$, sItemForm$, sFormatPrefix$, sAudiencePrefix$, _
+      Dim s099$, s130$, s300$, s600$, s650$, s655$, s730$, sCallType$, sAudn$, sLang$, sRecType$, sItemForm$, sFormatPrefix$, sAudiencePrefix$, _
        sLangPrefix$, sCutterArr$, sDewey$, sLitF$, sBiog$, sTMat$, sLTxt$
       Dim iAudn As Integer
       Dim sFormat() As String
@@ -96,20 +99,24 @@ Sub Main
          sOutput(1) = "copy to clipboard"
 
       'Dialog box presenting to a cataloger choices for types of call numbers
-      Begin Dialog UserDialog 220, 185, "BPL Call Number Macro"
-         GroupBox 20, 50, 180, 100, ""
+      Begin Dialog UserDialog 220, 220, "BPL Call Number Macro"
+         GroupBox 20, 50, 180, 140, ""
          OptionGroup .Type
          OptionButton  24,  55, 80, 14, "&EASY BOOK"
-         OptionButton  24,  75, 80, 14, "&FICTION / FEATURE"
+         OptionButton  24,  75, 80, 14, "&FICTION"
          OptionButton  24,  95, 80, 14, "&DEWEY"
          OptionButton  24,  115, 80, 14, "DEWEY + SUBJECT"
          OptionButton  24,  135, 80, 14, "&BIOGRAPHY"
+         OptionButton  24,  155, 80, 14, "&MOVIE"
+         OptionButton  24,  175, 80, 14, "&TV"
          
          Text          150, 57, 40, 24, "(jje, jer)"
          Text          130, 77, 64, 20, "( _fc, _my, _sf, _sh)"
          Text          134, 97, 64, 20, "( _nf, _ej, _nf, _ej)"
          Text          155, 117, 30, 14, "(anf)"
          Text          155, 137, 30, 10, "( _bi)"
+         Text          155, 157, 30, 10, "( _dv)"
+         Text          155, 177, 30, 10, "( _dv)"
          DropListBox   20, 10, 70, 115, sFormat(), .sFormat
          Text          92, 12, 40, 14, "FORMAT"
          Textbox       135, 11, 20, 13, .sInitials
@@ -117,8 +124,8 @@ Sub Main
          DropListBox   20, 30, 70, 40, sAudience(), .sAudience
          Text          92, 32, 40, 14, "AUDIENCE"
          DropListBox   135, 30, 65, 60, sOutput(), .sOutput
-         OkButton      40, 160,  54, 16
-         CancelButton  120, 160,  54, 16
+         OkButton      40, 200,  54, 16
+         CancelButton  120, 200,  54, 16
       End Dialog
       Dim dCallNum as UserDialog
       'populate INITIALS box with default value
@@ -166,9 +173,30 @@ Sub Main
       ElseIf sRecType = "j" Then
          dCallNum.sFormat = 4
          MsgBox "Please consider using BPLMusicCD macro instead"
-      ElseIf sRecType = "g" And sTMat = "v" Then
+      ElseIf sRecType = "g" And (sTMat = "v" Or sTMat = "m") Then
          dCallNum.sFormat = 6
-         dCallNum.Type = 1
+         ' type 5 (movie) or 6 (tv)
+         'sample first 650 if Drama
+         CS.GetField "650", 1, s650
+         If InStr(s650, "Drama.") <> 0 Or InStr(s650, "Juvenile drama.") <> 0 Then
+            'fictional work
+            CS.GetField "655", 1, s655
+            CS.GetField "130", 1, s130
+            CS.GetField "730", 1, s730
+            If InStr(s655, "television") <> 0 Or InStr(s130, "(Television") <> 0 Or InStr(s730, "(Television") <> 0 Then
+               dCallNum.Type = 6
+            Else
+               dCallNum.Type = 5
+            End If
+         Else
+            bool = CS.GetField("600", 1, s600)
+            If bool = TRUE Then
+               'suggest biography call type
+               dCallNum.Type = 4
+            Else
+               dCallNum.Type = 2
+            End If
+         End If
       ElseIf sRecType = "m" And sItemForm = "o" Then
          dCallNum.sFormat = 12
          dCallNum.Type = 2
@@ -210,14 +238,9 @@ CaseType:
          sCallType = "easy"
          s099 = "099  " & sFormatPrefix & sLangPrefix & "J-E "
       Case 1
-      'creates call number for fiction / feature movies and TV series
-         If dCallNum.sFormat = 6 Then
-            sCallType = "feat"
-            s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix
-         Else
-            sCallType = "fic"
-            s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & "FIC " & Chr(223) & "a "
-         End If
+      'creates call number for fiction
+         sCallType = "fic"
+         s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & "FIC " & Chr(223) & "a "
       Case 2
       'creates call number for Dewey classification
          sCallType = "dew"
@@ -233,7 +256,16 @@ CaseType:
       'creates call number for biography
          sCallType = "bio"
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & "B " & Chr(223) & "a "
+      Case 5
+      'creates call number for DVD feature movies
+         sCallType = "mov"
+         s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & "MOVIE " & Chr(223) & "a "
+      Case 6
+      'creates call number for DVD tv fictional show
+         sCallType = "tvs"
+         s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & "TV " & Chr(223) & "a "
       End Select
+
       
       Call CutterArray(sCutterArr,sCallType,sDewey)
       sCutter = Cutter(sCutterArr,sCallType,sBiog,sLTxt)
@@ -369,7 +401,7 @@ Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
    If sCallType = "easy" Then
       Goto Rule1
    End If
-   If sCallType = "feat" Then
+   If sCallType = "mov" Or sCallType = "tvs" Then
       Goto Rule4
    End If
    If sCallType = "fic" Then
@@ -496,7 +528,7 @@ Rule5:
    
    If (sBiog = "a" And sLTxt = "") Or (sBiog = "" And InStr("am", sLTxt) <> 0 And sLTxt <> "") And sCallType = "bio" Then
       Goto Rule6
-   ElseIf sBiog = "b" Or (InStr("bt", sLTxt) <> 0 And sBiog <> "") Or sCallType = "d_sub" Then
+   ElseIf sBiog = "b" Or (InStr("bt", sLTxt) <> 0 And sBiog <> "") Or sCallType = "d_sub" Or sCallType = "bio" Then
       If InStr(sCutterArr, "100_") <> 0 Then
          start_point = InStr(sCutterArr, "100_")
          temp$ = Mid(sCutterArr, start_point + 4, 1)
