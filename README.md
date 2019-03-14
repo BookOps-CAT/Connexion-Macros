@@ -21,6 +21,7 @@ Alternatively, copy the code for the individual macro directly from the .BAS fil
 10. Click the Check icon in the toolbar
 11. Click the Save icon in the toolbar
 12. After the macro is saved then it can be mapped to a user tool, key, or key chord as usual (optional).
+Done!
 
 ## Macros
 1. Brooklyn.mbk macrobook
