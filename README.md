@@ -3,11 +3,11 @@ A repository of the BookOps cataloging department Macros for OCLC Connexion clie
 
 ## Installation
 ### Easy Way
-To install,copy the macro book (.mbk file in /macrobooks folder) to the "C:\Program Files (x86)\OCLC\Connexion\Program\Macros" directory.
+To install, copy the macro book (.mbk file in /macrobooks folder) to the "C:\Program Files (x86)\OCLC\Connexion\Program\Macros" directory.
 
 Simple as that!
 ### Hard Way (Copy and Paste from Source)
-Alternatively copy the code for the individual macro directly from the .BAS file (/source directory) using the macro editor in Connexion.
+Alternatively, copy the code for the individual macro directly from the .BAS file (/source directory) using the macro editor in Connexion.
 
 1. Tools > Macros > Manage (CTRL-ALT-SHIFT-G)
 2. Select a local macro book
@@ -32,6 +32,7 @@ Alternatively copy the code for the individual macro directly from the .BAS file
 3. CAT.mbk macrobook
 	* BibcoEval (CATBibcoEval.bas)
 	* UpdateExport (CATUpdateExport.bas)
+    * ShareSave (CATShareSave.bas)
 4. ACQ.mbk macrobook
 	* RLOrderRec (ACQRLOrderRec.bas)
 5. NewMacros.mbk macrobook
