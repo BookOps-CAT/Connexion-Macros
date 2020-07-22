@@ -9,8 +9,10 @@
 '                  populate default values for the next run of the macro, allowing user to apply the same template to
 '                  consecutive order records
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: October 18, 2019 ; v. 1.5
+'Latest update: July 22, 2020 ; v. 1.7
 '
+'v.1.7 details (07-22-2020): data persisted in Connexion AppData folder specific to each user
+'v.1.6 details (03-10-2020): WNB vendor code added
 'v.1.5 details: Ugly Duckling Press vendor code (udp) added
 '
 '
@@ -83,7 +85,7 @@ Sub Main
          sLocation(17) = "SC"
          sLocation(18) = "SLR"
 'ZZZZZZZZZZ
-      ReDim sVendor(37)
+      ReDim sVendor(38)
          sVendor(0) = " "
          sVendor(1) = "4398"
          sVendor(2) = "ALIBR"
@@ -120,11 +122,13 @@ Sub Main
          sVendor(33) = "SBD"
          sVendor(34) = "SUR"
          sVendor(35) = "TROP"
-         sVendor(36) = "YBP"
-         sVendor(37) = "UDP"
+         sVendor(36) = "WNB"
+         sVendor(37) = "YBP"
+         sVendor(38) = "UDP"
 
       'read default data from text file stored in macro folder
       sFileName = "acq_data.txt"
+      sFileName = Mid(Environ(2), 9) + "\OCLC\Connex\Profiles\acq_data.txt"
       If Dir$ (sFileName) <> "" Then
          filenumber = FreeFile
          Open sFileName For Input As filenumber
@@ -344,3 +348,4 @@ MenuWindow:
    End If
 Done:
 End Sub
+

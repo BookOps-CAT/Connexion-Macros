@@ -1,13 +1,13 @@
 'MacroName:BPL CallNum macro
-'MacroDescription: Revised version of CallNum macro; 
+'MacroDescription: Revised version of CallNum macro;
 '                  includes format, audience, call type and output selection;
 '                  includes call number detection, local Dewey rules, call number conflict routine;
 '                  supports selection of names for the call number based on multiple 6xx fields,
 '                  improved behavior for computer science call numbers,
 '                  added separation of cataloger's initials and code (pulled from a file instead)
-'                  overlay string supplied for World Language materials 
+'                  overlay string supplied for World Language materials
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: September 28, 2018 (v. 2.0)
+'Last updated: July 20, 2020 (v. 2.3)
 'v.1.7 changes:
 '  *improved and simplified diactriticts function
 'v.1.8 changes:
@@ -18,8 +18,16 @@
 '  * Chinese lit time table handling added
 'v.2.0 changes:
 '  * feature DVD call number includes one of two type prefixes: TV and MOVIE
+'v.2.1 changes:
+'  * bug fix: corrected removal of time table numbers from Russian literature
+'v.2.2 changes:
+'  * autobiography cutter changes: main entry used for the cutter instead of the title entry
+'v.2.3 changes:
+'  * file with cataloger initials stored now in OCLC's profile directory
+
 
 Declare Function Dewey(sAudn,sCallType)
+Declare Function FileDlgFunction(identifier$, action, suppvalue)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
 Declare Sub CutterArray(sCutterArr,sCallType,sDewey)
 Declare Sub SubjectChoice(sSubjectArr)
@@ -41,15 +49,15 @@ Sub Main
       Dim sFormat() As String
       Dim sAudience() As String
       Dim sOutput() As String
-      
+
       'variables for storage and retrieval of cataloger's initials
       Dim filenumber As Integer
       Dim sFileName As String
       Dim sDefaultInitials$
       Dim sInitials$
-      
+
       'read default data (initials) from text file stored in macro folder
-      sFileName = "cat_data.txt"
+      sFileName = Mid(Environ(2), 9) + "\OCLC\Connex\Profiles\cat_data.txt"
       If Dir$ (sFileName) <> "" Then
          filenumber = FreeFile
          Open sFileName for Input As filenumber
@@ -63,7 +71,7 @@ Sub Main
          Close #filenumber
          sDefaultInitials = "xxx"
       End If
-      
+
       CS.GetFixedField "Type", sRecType
       CS.GetFixedField "Form", sItemForm
       CS.GetFixedField "Audn", sAudn
@@ -76,7 +84,7 @@ Sub Main
          s300 = Mid(s300, InStr(s300, Chr(223) & "e"))
       End If
       s300 = UCase(s300)
-      
+
       ReDim sFormat(12)
          sFormat(0) = " "
          sFormat(1) = "AUDIO"
@@ -99,7 +107,7 @@ Sub Main
          sOutput(1) = "copy to clipboard"
 
       'Dialog box presenting to a cataloger choices for types of call numbers
-      Begin Dialog UserDialog 220, 220, "BPL Call Number Macro"
+      Begin Dialog UserDialog 220, 220, "BPL Call Number Macro" '.FileDlgFunction
          GroupBox 20, 50, 180, 140, ""
          OptionGroup .Type
          OptionButton  24,  55, 80, 14, "&EASY BOOK"
@@ -109,7 +117,7 @@ Sub Main
          OptionButton  24,  135, 80, 14, "&BIOGRAPHY"
          OptionButton  24,  155, 80, 14, "&MOVIE"
          OptionButton  24,  175, 80, 14, "&TV"
-         
+
          Text          150, 57, 40, 24, "(jje, jer)"
          Text          130, 77, 64, 20, "( _fc, _my, _sf, _sh)"
          Text          134, 97, 64, 20, "( _nf, _ej, _nf, _ej)"
@@ -206,9 +214,9 @@ Sub Main
       End If
 
       On Error Resume Next
-      Dialog dCallNum 
+      Dialog dCallNum
       If Err = 102 Then Exit Sub
-      
+
       'construct field 099 with call number
       f = dCallNum.sFormat
       a = dCallNum.sAudience
@@ -225,12 +233,12 @@ Lang:
       Else
          sLangPrefix = sLang & " " & Chr(223) & "a "
       End If
-AudnType:     
+AudnType:
       If dCallNum.sAudience = 0 Then
          sAudnPrefix = "J " & Chr(223) & "a "
       Else
          Goto CaseType
-      End If   
+      End If
 CaseType:
       Select Case dCallNum.Type
       Case 0
@@ -266,7 +274,7 @@ CaseType:
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & "TV " & Chr(223) & "a "
       End Select
 
-      
+
       Call CutterArray(sCutterArr,sCallType,sDewey)
       sCutter = Cutter(sCutterArr,sCallType,sBiog,sLTxt)
       'Output selection
@@ -288,7 +296,7 @@ CaseType:
          Open sFileName for Output As filenumber
          Print #filenumber, sInitials
          Close #filenumber
-         
+
          'insert call number
          s099 = s099 & sCutter
          Call InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f, sInitials)
@@ -296,11 +304,17 @@ CaseType:
    Else
       MsgBox "INFO: A bibliographic record must be displayed in order to use this macro."
       Goto Done
-   End If   
+   End If
 Done:
 
 Call Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType,sItemForm, sLitF, sTMat, sLTxt, f, a)
 End Sub
+'##############################################################
+
+Function FileDlgFunction(identifier$, action, suppvalue)
+   DlgFocus 0
+End Function
+
 
 '##############################################################
 
@@ -311,7 +325,7 @@ Function Dewey(sAudn,sCallType)
    Dim s082$, sLastDigit$
    Dim x as Integer
    Dim place as Integer
-   
+
    bool082 = CS.GetField("082", 1, s082)
    If bool082 = FALSE Then
       MsgBox "MISSING DATA: no 082 field in the record. Please supply Dewey classification number manually."
@@ -395,9 +409,9 @@ Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
    'Rule5: full surname from 600 and 1st letter of main entry
    'Rule6: full surname from 600 and 1st letter of 245
    'Rule7: no cutter
-   
+
    Dim sSubjectArr$
-   
+
    If sCallType = "easy" Then
       Goto Rule1
    End If
@@ -416,7 +430,7 @@ Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
    If sCallType = "bio" Then
       GoTo Rule5
    End If
-   
+
 Rule1:
 'full author last name or nothing
    If InStr(sCutterArr, "100_") <> 0 Then
@@ -428,7 +442,7 @@ Rule1:
       MsgBox "INFO: Cutter not needed, easy materials with title entry have call number J-E without a cutter."
    End If
    Goto Done
-   
+
 Rule2:
 'full author last name or 1st letter of title
    If InStr(sCutterArr, "100_") <> 0 Then
@@ -443,7 +457,7 @@ Rule2:
       End If
    End If
    Goto Done
-   
+
 Rule3:
 '1st letter of main entry
    If InStr(sCutterArr, "100_") <> 0 Then
@@ -459,7 +473,7 @@ Rule3:
       End If
    End If
    Goto Done
-   
+
 Rule4:
 'full 1st word of title
    If InStr(sCutterArr, "245_") <> 0 Then
@@ -473,12 +487,12 @@ Rule4:
       End If
    End If
    Goto Done
-   
+
 Rule5:
 'full last name from 6xx and 1st letter of main entry
    temp$ = sCutterArr
    x = 0
-   Do While InStr(temp$, "600_") 
+   Do While InStr(temp$, "600_")
       start_point = InStr(temp$, "600_")
       temp$ = Mid(temp$, start_point + 4)
       end_point = InStr(temp$, Chr(9))
@@ -487,7 +501,7 @@ Rule5:
       x = x + 1
    Loop
    temp$ = sCutterArr
-   Do While InStr(temp$, "610_") 
+   Do While InStr(temp$, "610_")
       start_point = InStr(temp$, "610_")
       temp$ = Mid(temp$, start_point + 4)
       end_point = InStr(temp$, Chr(9))
@@ -496,7 +510,7 @@ Rule5:
       x = x + 1
    Loop
    temp$ = sCutterArr
-   Do While InStr(temp$, "650_") 
+   Do While InStr(temp$, "650_")
       start_point = InStr(temp$, "650_")
       temp$ = Mid(temp$, start_point + 4)
       end_point = InStr(temp$, Chr(9))
@@ -505,7 +519,7 @@ Rule5:
       x = x + 1
    Loop
    temp$ = sCutterArr
-   Do While InStr(temp$, "630_") 
+   Do While InStr(temp$, "630_")
       start_point = InStr(temp$, "630_")
       temp$ = Mid(temp$, start_point + 4)
       end_point = InStr(temp$, Chr(9))
@@ -515,7 +529,7 @@ Rule5:
    Loop
    If x = 0 Then
       MsgBox "MISSING DATA: Record doesn't have valid 6xx field for this class number"
-      sCutter = Chr(252) 
+      sCutter = Chr(252)
    ElseIf x = 1 Then
       sCutter = RTrim(sSubjectArr)
    Else
@@ -525,10 +539,8 @@ Rule5:
          sCutter = Chr(252)
       End If
    End If
-   
-   If (sBiog = "a" And sLTxt = "") Or (sBiog = "" And InStr("am", sLTxt) <> 0 And sLTxt <> "") And sCallType = "bio" Then
-      Goto Rule6
-   ElseIf sBiog = "b" Or (InStr("bt", sLTxt) <> 0 And sBiog <> "") Or sCallType = "d_sub" Or sCallType = "bio" Then
+
+   If sBiog = "b" Or (InStr("bt", sLTxt) <> 0 And sBiog <> "") Or (sBiog = "a" And sLTxt = "") Or (sBiog = "" And InStr("am", sLTxt) <> 0 And sLTxt <> "") Or sCallType = "d_sub" Or sCallType = "bio" Then
       If InStr(sCutterArr, "100_") <> 0 Then
          start_point = InStr(sCutterArr, "100_")
          temp$ = Mid(sCutterArr, start_point + 4, 1)
@@ -547,19 +559,20 @@ Rule5:
       sCutter = sCutter & " " &  Chr(223) & "a " & Chr(252)
    End If
    Goto Done
-   
+
 Rule6:
+'Rule obsolete (cuttering autobiography has changed to main entry on June 14, 2019)
 'full last name from 600 and 1st letter of title if autobiography
    If InStr(sCutterArr, "245_") <> 0 Then
       start_point = InStr(sCutterArr, "245_")
       temp$ = Mid(sCutterArr, start_point + 4, 1)
       sCutter = sCutter & " " & Chr(223) & "a " & temp$
    End If
-   
+
 Rule7:
 'no Cutter
    Cutter = ""
-   
+
 Done:
    Cutter = sCutter
 End Function
@@ -567,7 +580,7 @@ End Function
 '########################################################
 
 Sub SubjectChoice(sSubjectArr)
-   
+
    Begin Dialog UserDialog 200, 60, "Select Subject"
       DropListBox  8, 15, 100, 250, sSubjectArr, .sSubjectArr
       OkButton        130, 15,  54, 16
@@ -580,7 +593,7 @@ Sub SubjectChoice(sSubjectArr)
       sSubjectArr = ""
       Exit Sub
    End If
-   
+
    n = dSubject.sSubjectArr + 1
    temp$ = sSubjectArr
    x = 0
@@ -606,7 +619,7 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
    Set CS = CreateObject("Connex.Client")
    Dim sNameTitle$
    Dim i as Integer
-      
+
    bool100 = CS.GetFieldUnicode("100", 1, sNameTitle)
    If bool100 = TRUE Then
       If InStr(sNameTitle, "&#") <> 0 Then
@@ -631,7 +644,7 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
       Call Diacritics(sNameTitle)
       sCutterArr = sCutterArr & sNameTitle & Chr(9)
    End If
-   
+
    If sCallType = "d_sub" Or sCallType = "bio" Then
       i = 1
       Do While CS.GetFieldUnicode("600", i, sNameTitle)
@@ -655,7 +668,7 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
             End If
          i = i + 1
          Loop
-         
+
          If Left(sDewey, 3) = "004" Or Left(sDewey, 3) = "005" Or Left(sDewey, 3) = "006" Then
             i = 1
             Do While CS.GetFieldUnicode("630", i, sNameTitle)
@@ -686,7 +699,7 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
          End If
       End If
   End If
-   
+
 End Sub
 
 '####################################################################
@@ -696,7 +709,7 @@ Sub Diacritics(sNameTitle)
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
    Dim i as Integer
-   
+
    Indicator = Mid(sNameTitle,5,1)
    If Indicator = "0" Or Indicator = " " Then
       lt$ = Left(sNameTitle, 3) & "_"
@@ -710,7 +723,7 @@ Sub Diacritics(sNameTitle)
    i = 1
    While i <= Len(sNameTitle)
       CheckChar = Mid(sNameTitle, i, 1)
-      
+
       Select Case CheckChar
          'characters above letter (example: acute, breve, umlaut, macron, etc.)
          Case Chr(226), Chr(174), Chr(176), Chr(230), Chr(239), Chr(234), Chr(227), Chr(238), Chr(250), Chr(251), Chr(225), Chr(96), Chr(233), Chr(254), Chr(237), Chr(235), Chr(236), Chr(229), Chr(167), Chr(228), Chr(126), Chr(183), Chr(232), Chr(231)
@@ -748,9 +761,9 @@ Sub Diacritics(sNameTitle)
 '         Case ":", ";", "/"
 '            sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
 '            i = i - 1
-          
+
       End Select
-      i = i + 1   
+      i = i + 1
    Wend
    If InStr(sNameTitle, Chr(223) & "e") Then
       place = InStr(sNameTitle, Chr(223) & "e")
@@ -789,7 +802,7 @@ Sub Diacritics(sNameTitle)
       sNameTitle = lt$ + rt$
    Loop
    sNameTitle = UCase(sNameTitle)
-   
+
 End Sub
 
 '##################################################
@@ -799,7 +812,7 @@ Sub LocalDewey(s082,sCallType)
    Set CS = CreateObject("Connex.Client")
    Dim sClassNum$, sFirstDig$, sFirstTwoDig$, sFirstThreeDig$, sFirstFiveDig$, sFirstSixDig$, sFirstSevenDig$, s3rdTo7thDig$
    Dim s2ndDig$, s3rdDig$, s5thDig$, s6thDig$, s7thDig$, s8thDig$, s9thDig$
-   
+
    sClassNum = Left(s082,8)
    sFirstDig = Left(s082,1)
    sFirstTwoDig = Left(s082,2)
@@ -815,7 +828,7 @@ Sub LocalDewey(s082,sCallType)
    s8thDig = Mid(s082,8,1)
    s9thDig = Mid(field082,9,1)
    s3rdTo7thDig = Mid(s082,3,5)
-   
+
    'Shakespeare call number
    If sClassNum = "822.33" Then
       s082 = s082 & " " & Chr(223) & "a " & "S52"
@@ -828,49 +841,49 @@ Sub LocalDewey(s082,sCallType)
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of programming language, example: 005.133 C++ K. Please insert language name before the cutter or run macro again and select Dewey + Subject option."
       End If
-   
+
       'specific mobile devices
       If sClassNum = "004.1675" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of mobile device, example: 004.1675 IPHONE C. Please insert the name of the device before the cutter or run macro again and select Dewey + Subject option."
       End If
-   
+
       'programing for specific operating system of mobile devices
       If sClassNum = "005.258" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of opearing system, example: 005.258 ANDROID K. Please inster the name of operating system before the cutter or run macro again and select Dewey + Subject option."
       End If
-   
+
       'apps for specific operating system of mobile devices
       If sClassNum = "005.3582" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of operating system, example: 005.3582 WINDOWS M. Please insert the name of operating system before the cutter or run macro again and select Dewey + Subject option."
       End If
-   
+
       'specific personal computers
       If sClassNum = "004.165" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of computer, example: 004.165 IMAC C. Please insert the name of computer before the cutter or run macro again and select Dewey + Subject option."
       End If
-   
-      'specific operating systems 
+
+      'specific operating systems
       If sClassNum = "005.432" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of operating system, example: 005.432 LINUX B. Please insert the name of operating system before the cutter or run macro again and select Dewey + Subject option."
       End If
-   
+
       'specific operating systems of personal computers
       If sClassNum = "005.446" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of operating system, example: 005.446 VISTA B. Please insert the name of operating system before the cutter or run macro again and select Dewey + Subject option."
       End If
-   
+
       'general purpose programs
       If sFirstFiveDig = "005.5" Then
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of program or software package, example: 005.5 OFFICE B, 005.54 EXCEL C. Please insert the name of program or software package before the cutter or run macro again and select Dewey + Subject option."
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
       End If
-   
+
       'database management systems
       If sClassNum = "005.7585" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
@@ -880,14 +893,14 @@ Sub LocalDewey(s082,sCallType)
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of database, example: 005.7585 ACCESS Z. Please insert the name of database before the cutter or run macro again and select Dewey + Subject option."
       End If
-      
+
       'markup languages
       If sClassNum = "006.74" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of language, example: 006.74 HTML Z. Please insert the name of markup language before the cutter or run macro again and select Dewey + Subject option."
       End If
    End If
-   
+
    'travel guides
    If sFirstTwoDig = "91" And s3rdDig <> "0" And s3rdDig <> "1" And s3rdDig <> "2" Then
       MsgBox "INFO: 082 field indicates the item is a guidebook. BPL Dewey number for guidebooks stops before 04 notation."
@@ -896,13 +909,13 @@ Sub LocalDewey(s082,sCallType)
          s082 = Left(s082, place-1)
       End If
    End If
-   
+
    'Bible modern translations
    If sFirstFiveDig = "220.5" Then
       MsgBox "INCOMPLETE: Please correct the cutter. BPL call number for Bible includes Sanborn cutter B582 and cataloger's supplied cutter (use editor or publisher) of one or more letters."
-      s082 = s082 & " " & Chr(223) & "a " & "B582" 
+      s082 = s082 & " " & Chr(223) & "a " & "B582"
    End If
-   
+
    'removes time periods from American English, English, Spanish, German, French & Italian literature call number
    If sFirstDig = "8" And InStr("123456", s2ndDig) <> 0 Then
       If InStr("12345678", s3rdDig) <> 0 And InStr("123456789", s5thDig) <> 0 Then
@@ -968,7 +981,7 @@ Sub LocalDewey(s082,sCallType)
       End If
    End If
    'removes time periods from Russian literature call numbers
-   If sFirstFiveDig = "891.5" And InStr("12345678", s6thDig) <> 0 Then
+   If sFirstFiveDig = "891.7" And InStr("12345678", s6thDig) <> 0 Then
       If InStr("12345", s7thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -1085,7 +1098,7 @@ Sub LocalDewey(s082,sCallType)
             s082 = Left(s082, 5)
          End If
    End If
-   'removes time periods from Danish, Norwegian literatures call numbers 
+   'removes time periods from Danish, Norwegian literatures call numbers
    If sFirstFiveDig = "839.8" And InStr("12", s6thDig) <> 0 Then
       If InStr("12345678", s7thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
@@ -1105,7 +1118,7 @@ Sub LocalDewey(s082,sCallType)
          End If
       End If
    End If
-   'removes time periods from Arabic literatures call numbers 
+   'removes time periods from Arabic literatures call numbers
    If sFirstFiveDig = "892.7" And InStr("12345678", s6thDig) <> 0 And InStr("1234567", s7thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -1143,8 +1156,8 @@ Sub LocalDewey(s082,sCallType)
          End If
       End If
    End If
-   
-Done:  
+
+Done:
 End Sub
 
 '################################################################################
@@ -1215,7 +1228,7 @@ LitCheck:
    End If
 BioCheck:
    If sRecType = "a" Then
-      If InStr("bio+d_sub", sCallType) <> 0 Then 
+      If InStr("bio+d_sub", sCallType) <> 0 Then
          If InStr("abd", sBiog) = 0 Then
             MsgBox "INFO: Caution advised. Record not coded as a biography/autobiography."
          Else
@@ -1224,13 +1237,13 @@ BioCheck:
       Else
          If InStr("ab", sBiog) <> 0 And sBiog <> "" Then
             MsgBox "INFO: Caution advised. Record coded as a biography/autobiography."
-         End If 
+         End If
       End If
    ElseIf sRecType = "i" Then
       If InStr("abmt", sLTxt) <> 0 and sLTxt <> "" Then
          If InStr("bio+d_sub", sCallType) = 0 Then
             MsgBox "INFO: Caution advised. Record coded as a biography/autobiography."
-         End If 
+         End If
       End If
    End If
 FormCheck:
@@ -1269,13 +1282,13 @@ FormCheck:
    ElseIf f = 11 Then
       If sRecType <> "i" Then
          MsgBox "FORMAT conflict: bibliographical record type is not for audio-enabled books. Please verify your selection."
-      End If   
+      End If
    ElseIf f = 12 Then
       If sRecType <> "m" And sItemForm <> "o" Then
          MsgBox "FORMAT conflict: bibliographical record type is not for electronic remote access resources. Please verify your selection."
-      End If   
+      End If
    End If
-   
+
    'check if material format is correct for DVD
    If sRecType = "g" Then
       n = 1
@@ -1301,7 +1314,7 @@ CutterCheck:
    If InStr("0123456789", sCutter) <> 0 Then
       MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spell out number in the language of the cataloged material."
    End If
-   
+
 End Sub
 
 '##################################################
@@ -1314,17 +1327,17 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    Dim n as Integer
 
    CS.SetField 1, s099
-   
+
    s949 = "949  *"
    sOverlay = "recs=b;ov=."
    sLargePrint = "b2=l;"
    sDVD = "b2=h;"
    sCD = "b2=i;"
-   
+
    If sRecType = "a" Then
       If sItemForm = "d" Then
          MsgBox "INFO: Large print record. Setting Sierra format code to large print."
-         SierraCode = s949 & sLargePrint & sOverlay 
+         SierraCode = s949 & sLargePrint & sOverlay
       Else
          SierraCode = s949 & sOverlay
       End If
@@ -1333,9 +1346,9 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    ElseIf sRecType = "i" Then
       SierraCode = s949 & sCD & sOverlay
    End If
-   
+
    CS.SetField 1, SierraCode
-   
+
    'BOOK & CD call numbers lacking 007 or 006
    If f = 2 Then
       bool007 = CS.GetField("007", 1, s007)
@@ -1359,7 +1372,7 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
             End Dialog
             Dim CaseOptions as TypeChoices
             On Error Resume Next
-            Dialog CaseOptions 
+            Dialog CaseOptions
             If Err = 102 Then Exit Sub
             Select Case CaseOptions.Choice
                Case 0
@@ -1391,7 +1404,7 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
                End Dialog
                Dim LTxtOptions as LTxtChoices
                On Error Resume Next
-               Dialog LTxtOptions 
+               Dialog LTxtOptions
                If Err = 102 Then Exit Sub
                Select Case LTxtOptions.Choice
                   Case 0
@@ -1427,10 +1440,10 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
                   Case 15
                      LTxt$ = "z "
                End Select
-               s006 = "006  " & SoundRecType$ & "nnnn" & sAudn & "       " & LTxt$ &  " n "  
+               s006 = "006  " & SoundRecType$ & "nnnn" & sAudn & "       " & LTxt$ &  " n "
             ElseIf srec_type$ = "j" Then
                s006 = "006  " & SoundRecType$ & Chr(252) & Chr(252) & "nn" & sAudn & "          n "
-            End If        
+            End If
          ElseIf sRecType = "i" or sRecType = "j" Then
             bool = CS.GetFixedField("LTxt", sLTxt$)
             If InStr("a ,b , c ,gt, h ,i , j ,l ,m ,o ,kr,s ,tm,z ", sLTxt$) <> 0 Then
@@ -1441,7 +1454,7 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
                bio$ = "b"
             ElseIf InStr("d ,ez,f ,p ", sLTxt$) <> 0 Then
                form$ = Left(sLTxt$, 1)
-               bio$ = " " 
+               bio$ = " "
             Else
                bio$ = " "
                form$ = "0"
@@ -1460,7 +1473,7 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    Do While nBool = TRUE
       If InStr("653", Mid(subhead$, 1, 3)) <> 0 Then
          CS.DeleteFieldLine n
-      End If      
+      End If
       If InStr("600,610,611,630,650,651,655", Mid(subhead$, 1, 3)) <> 0 Then
          If Mid(subhead$,5,1) = "0" Or Mid(subhead$,5,1) = "1" Or InStr(subhead$, Chr(223) & "2 gsafd") _
           Or InStr(subhead$, Chr(223) & "2 fast") Or InStr(subhead$, Chr(223) & "2 lcsh") _
@@ -1482,33 +1495,33 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
             CS.DeleteFieldLine n
          End If
       Else
-         n = n + 1 
+         n = n + 1
       End If
-      nBool = CS.GetFieldLine(n,subhead$) 
+      nBool = CS.GetFieldLine(n,subhead$)
    Loop
    If sItemForm <> "o" Then
       n = 1
       nBool = CS.GetField("020", n, isbn$)
       Do While nBool = TRUE
          isbn$ = LCase(isbn$)
-         If InStr(isbn$, "ebk") <> 0 Or InStr(isbn$, "ebook") <> 0 Or InStr(isbn$, "electronic") <> 0 _ 
-          Or InStr(isbn$, "e-book") <> 0 Or InStr(isbn$, "e-isbn") <> 0 Or InStr(isbn$, "e-mhid") <> 0 _ 
+         If InStr(isbn$, "ebk") <> 0 Or InStr(isbn$, "ebook") <> 0 Or InStr(isbn$, "electronic") <> 0 _
+          Or InStr(isbn$, "e-book") <> 0 Or InStr(isbn$, "e-isbn") <> 0 Or InStr(isbn$, "e-mhid") <> 0 _
           Or InStr(isbn$, "pdf") <> 0 Or InStr(isbn$, "epub") <> 0 Or InStr(isbn$, "e-mobi") <> 0 _
           Or InStr(isbn$, "html") <> 0 Or InStr(isbn$, "mobil") <> 0 Or InStr(isbn$, "el.") <> 0 Then
             'remove apostrophe in the beginning of the line below to display deleted isbns
             'MsgBox isbn$
             CS.DeleteField "020", n
          Else
-            n = n + 1 
+            n = n + 1
          End If
          nBool = CS.GetField("020", n, isbn$)
-      Loop 
+      Loop
    End If
-   
+
    'add field with initials
    s947 = "947  " & sInitials
    CS.SetField 1, s947
-   
+
    CS.EndRecord
-   
+
 End Sub

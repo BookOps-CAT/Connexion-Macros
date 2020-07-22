@@ -1,13 +1,15 @@
-'MacroName:NYPL CallNum v.2.5.9
+'MacroName:NYPL CallNum v.2.5.10
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
-'                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
-'                  incorporates functions of Format macro - populates subfield $f
+'                  Macro handles call number patterns for English and World Lanugages, fiction, non-fiction, biography and biography with Dewey
+'                  incorporates functions of Format macro - populates subfielf $f
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: March 07, 2019
-'tests the length of call number
+'Latest update: July 20, 2020
+
+'v.2.5.10 update details:
+'  * catalogers initials saved to OCLC profile folder instead of general Connexion directory (more likely to have write access)
 
 'v.2.5.9 update details:
-'  * complete elimination of 11 character rule in cutter for non-latin materials - only last name used or first letter
+'  * complete elimination of 11 characters rule in cutter for non-latin materials - only last name used or first letter
 '    (cutter in subfield $c)
 
 'v.2.5.8 update details:
@@ -22,12 +24,12 @@
 '  * bug fix: underscore nonspacing character (Chr(246)) handling fixed
 
 'v.2.5.5 update details:
-'  * bug fix: proper behavior if no bibliographic record displayed
+'  * bug fix: proper behaviour if no bibliographic record displayed
 '  * added flag for short stories collections
 
 'v.2.5.4 update details:
-'  *bug fix: removes false fiction flag for Graphic Novels
-'  *improvement: diacritics function simplified and made more comprehensive
+'  *bug fix: removes flase fiction flag for Graphic Novels
+'  *improvement: diactritics function simplified and made more comprehensive
 '  *bug fix: corrected broken format error flags
 '  *rules change: authors name for literary collection changed from $b to $c
 '  *improvement: added validation error flag for Dewey + Name call numbers that are not in 7xx or 8xx range
@@ -101,7 +103,8 @@ Sub Main
          sOutput(1) = "add to clipboard"
 
       'read default data (initials) from text file stored in macro folder
-      sFileName = "cat_data.txt"
+      sFileName = Mid(Environ(2), 9) + "\OCLC\Connex\Profiles\cat_data.txt"
+
       If Dir$ (sFileName) <> "" Then
          filenumber = FreeFile
          Open sFileName for Input As filenumber
@@ -611,7 +614,7 @@ End Sub
 '########################################################################
 
 Function Dewey(a)
-'creates string with Dewey number taken from 082 field; 4 digits after period for adult materials, 2 digits for juvenile; strips 0s at the end
+'creates string with Dewey number taken from 082 field; 4 digits after period for adult materials, 2 digitst for juvenile; stirps 0s at the end
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
    Dim s082$, sLastDigit$
@@ -781,7 +784,7 @@ Sub Diacritics(sNameTitle)
          Case "'", Chr(176), Chr(174), Chr(167)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
             i = i - 1
-'        commented out for update v. 2.5.6. - these characters are allowed in cutters for visual materials effective 08/01/2018
+'        commmented out for update v. 2.5.6. - these characters are allowed in cutters for visual materials effective 08/01/2018
 '         Case ".", ":", ";", "/"
 '            sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
 '            i = i - 1
@@ -791,7 +794,7 @@ Sub Diacritics(sNameTitle)
    Wend
    sNameTitle = UCase(sNameTitle)
 '  update v.2.5.8: period should not be allowed as the last element of cutter
-'                 - a bug introduced in v. 2.5.6 when period was allowed in DVD call numbers
+'                 - a bug introdued in v. 2.5.6 when period was allowed in DVD call numbers
    If Right(sNameTitle, 1) = "." Then
       sNameTitle = Left(sNameTitle, Len(sNameTitle) - 1)
    End If
@@ -949,4 +952,3 @@ Sub InsertCallNum(s948, f, sInitials)
    CS.SetField 1, s901
  CS.EndRecord
 End Sub
-
