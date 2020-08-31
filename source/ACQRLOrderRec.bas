@@ -9,8 +9,9 @@
 '                  populate default values for the next run of the macro, allowing user to apply the same template to
 '                  consecutive order records
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: July 22, 2020 ; v. 1.7
+'Latest update: August 31, 2020 ; v. 1.8
 '
+'v.1.8 details (09-31-2020): added new vendor - NESTO
 'v.1.7 details (07-22-2020): data persisted in Connexion AppData folder specific to each user
 'v.1.6 details (03-10-2020): WNB vendor code added
 'v.1.5 details: Ugly Duckling Press vendor code (udp) added
@@ -85,7 +86,7 @@ Sub Main
          sLocation(17) = "SC"
          sLocation(18) = "SLR"
 'ZZZZZZZZZZ
-      ReDim sVendor(38)
+      ReDim sVendor(39)
          sVendor(0) = " "
          sVendor(1) = "4398"
          sVendor(2) = "ALIBR"
@@ -115,16 +116,17 @@ Sub Main
          sVendor(26) = "MDJ"
          sVendor(27) = "MEXIC"
          sVendor(28) = "MGENS"
-         sVendor(29) = "NORTE"
-         sVendor(30) = "PRAGE"
-         sVendor(31) = "PVL"
-         sVendor(32) = "RETTA"
-         sVendor(33) = "SBD"
-         sVendor(34) = "SUR"
-         sVendor(35) = "TROP"
-         sVendor(36) = "WNB"
-         sVendor(37) = "YBP"
-         sVendor(38) = "UDP"
+         sVendor(29) = "NESTO"
+         sVendor(30) = "NORTE"
+         sVendor(31) = "PRAGE"
+         sVendor(32) = "PVL"
+         sVendor(33) = "RETTA"
+         sVendor(34) = "SBD"
+         sVendor(35) = "SUR"
+         sVendor(36) = "TROP"
+         sVendor(37) = "WNB"
+         sVendor(39) = "YBP"
+         sVendor(39) = "UDP"
 
       'read default data from text file stored in macro folder
       sFileName = "acq_data.txt"
@@ -348,4 +350,3 @@ MenuWindow:
    End If
 Done:
 End Sub
-
