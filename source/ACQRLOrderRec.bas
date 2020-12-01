@@ -9,12 +9,13 @@
 '                  populate default values for the next run of the macro, allowing user to apply the same template to
 '                  consecutive order records
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: August 31, 2020 ; v. 1.8
+'Latest update: December 1, 2020 ; v. 1.9
 '
-'v.1.8 details (09-31-2020): added new vendor - NESTO
-'v.1.7 details (07-22-2020): data persisted in Connexion AppData folder specific to each user
-'v.1.6 details (03-10-2020): WNB vendor code added
-'v.1.5 details: Ugly Duckling Press vendor code (udp) added
+'v1.9 details (12-01-2020): YBP bug fixed
+'v1.8 details (09-31-2020): added new vendor - NESTO
+'v1.7 details (07-22-2020): data persisted in Connexion AppData folder specific to each user
+'v1.6 details (03-10-2020): WNB vendor code added
+'v1.5 details: Ugly Duckling Press vendor code (udp) added
 '
 '
 'To add a location to the list go the section marked XXXXXXXX and
@@ -125,7 +126,7 @@ Sub Main
          sVendor(35) = "SUR"
          sVendor(36) = "TROP"
          sVendor(37) = "WNB"
-         sVendor(39) = "YBP"
+         sVendor(38) = "YBP"
          sVendor(39) = "UDP"
 
       'read default data from text file stored in macro folder
