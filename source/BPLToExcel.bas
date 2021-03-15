@@ -10,7 +10,12 @@ Sub Main
   Set CS = CreateObject("Connex.Client")
 
   'Set the output Excel file
-  sFileName = "C:" & Mid(Environ(11), 10) + "\Desktop\LargePrint.xls"
+   If Environ("HOMEPATH") <> 0 Then
+      sFileName = "C:" & Environ("HOMEPATH") + "\Desktop\LargePrint.xls"
+   Else
+      MsgBox "System is missing the 'HOMEPATH' environmental variable"
+   End If
+   
 
 
   If Dir(sFileName) = "" Then
@@ -116,4 +121,3 @@ Sub Main
   'Close the new Excel session
   XL.Quit
 End Sub
-
