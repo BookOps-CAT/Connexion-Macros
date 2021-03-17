@@ -1,10 +1,12 @@
-'MacroName:NYPL CallNum v.2.5.10
+'MacroName:NYPL CallNum v.2.6.1
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
 '                  Macro handles call number patterns for English and World Lanugages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfielf $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: January 29, 2021
 
+'v2.6.1 update details (03-17-2021):
+' * removal of unapproved in NYPL catalog headings (BISACS, SEARS, etc.)
+' * removal of GN prefix from grapic novels (GRAPHIC GN FIC ADAMS -> GRAPHIC FIC ADAMS)
 
 'v2.6.0 update details (01-29-2021):
 '  * 
@@ -141,7 +143,6 @@ Sub Main
          OptionButton  24,  115, 70, 14, "&DEWEY"
          OptionButton  24,  135, 70, 14, "DEWEY + &NAME"
          OptionButton  24,  155, 70, 14, "&FICTION"
-         OptionButton  24,  175, 70, 14, "&GN FICTION"
          OptionButton  125,  55, 70, 14, "&MYSTERY"
          OptionButton  125,  75, 70, 14, "&ROMANCE"
          OptionButton  125,  95, 70, 14, "&SCI FI"
@@ -155,7 +156,7 @@ Sub Main
          Text 81, 32, 78, 14, "AUDIENCE"
          Textbox 130, 12, 20, 15, .sInitials
          Text 160, 14, 30, 30, "INITIALS"
-         'Text 150, 12, 70, 14, "Output:"
+         'type of output:
          DropListBox  130, 30, 68, 40, sOutput(), .sOutput
          OkButton        50, 195,  55, 16
          CancelButton   115, 195,  55, 16
@@ -257,28 +258,24 @@ Sub Main
             sCallType = "fic"
             s948 = s948 & Chr(223) & "a FIC"
          Case 6
-            sCallType = "gfi"
-            dCallNum.sFormat = 7
-            s948 = s948 & Chr(223) & "a GN FIC"
-         Case 7
             sCallType = "mys"
             s948 = s948 & Chr(223) & "a MYSTERY"
-         Case 8
+         Case 7
             sCallType = "rom"
             s948 = s948 & Chr(223) & "a ROMANCE"
-         Case 9
+         Case 8
             sCallType = "sci"
             s948 = s948 & Chr(223) & "a SCI FI"
-         Case 10
+         Case 9
             sCallType = "urb"
             s948 = s948 & Chr(223) & "a URBAN"
-         Case 11
+         Case 10
             sCallType = "wes"
             s948 = s948 & Chr(223) & "a WESTERN"
-         Case 12
+         Case 11
             sCallType = "mov"
             s948 = s948 & Chr(223) & "a MOVIE"
-         Case 13
+         Case 12
             sCallType = "tvs"
             s948 = s948 & Chr(223) & "a TV"
       End Select
@@ -357,7 +354,7 @@ Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
    End If
    
    'determine rule to apply
-   If InStr("eas,pic,fic,gfi,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+   If InStr("eas,pic,fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
       Goto Rule1
    ElseIf sCallType = "dew" Then
       Goto Rule2
@@ -368,7 +365,7 @@ Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
    End If
   
 Rule1:
-   'fic, eas, pic, urb, sci, wes, rom, gfi, mys: last name of author, first word of 110 or first letter of 245
+   'fic, eas, pic, urb, sci, wes, rom, mys: last name of author, first word of 110 or first letter of 245
    If Left(sMainEntry, 3) = "100" Then
       sMainEntry = Mid(sMainEntry, 6)
       Do While InStr(sMainEntry, ",")
@@ -834,14 +831,14 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
    'format related conflicts
    If f = 0 Then
       'format empty
-      If InStr("gfi,mov,tvs", sCallType) <> 0 Then
+      If InStr("mov,tvs", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       ElseIf sItemForm = "d" Then
          MsgBox "FORMAT conflict: Please verify format selection. It appears format should be LG PRINT"
       End If
    ElseIf f = 1 Or f = 4 Then
       'format BlueRay or DVD
-      If InStr("eas,pic,fic,gfi,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+      If InStr("eas,pic,fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       End If
       If sRecType <> "g" And sTMat <> "v" Then
@@ -866,7 +863,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
       End If
    ElseIf f = 7 Then
       'format HOLIDAY
-      If InStr("den,bio,gfi,mys,rom,sci,urb,wes,mov,tvs", sCallType) <> 0 Then
+      If InStr("den,bio,mys,rom,sci,urb,wes,mov,tvs", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       ElseIf InStr("abcj", sAudn) = 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
@@ -878,7 +875,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
       End If
    ElseIf f = 9 Then
       'format LG PRINT
-      If InStr("eas,pic,gfi,mov,tvs", sCallType) <> 0 Then
+      If InStr("eas,pic,mov,tvs", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       ElseIf sItemForm <> "d" Then
          MsgBox "FORMAT conflict: Please verify format selection and item form coding."
@@ -901,11 +898,11 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
    'content validation
    If sRecType = "a" Then
       If InStr("1fj", sLitF) <> 0 Then
-         If InStr("eas,pic,fic,gfi,mys,rom,sci,urb,wes", sCallType) = 0 Then
+         If InStr("eas,pic,fic,mys,rom,sci,urb,wes", sCallType) = 0 Then
             MsgBox "LITERARY FORM conflict: Fixed field indicates the material is work of fiction. Please verify your selection."
          End If
       Else
-         If InSTr("fic,gfi,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+         If InSTr("fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
             MsgBox "LITERARY FORM conflict: Fixed field indicates the material is non-fiction work. Please verify your selection."
          End If
       End If
@@ -935,6 +932,10 @@ Sub InsertCallNum(s948, f, sInitials)
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
    Dim s901$
+   Dim s650$
+   Dim subhead$
+   Dim n As Integer
+   Dim nBool
    
    CS.SetField 1, s948
    CS.SetField 1, "945  .b" & Chr(252)
@@ -959,6 +960,34 @@ Sub InsertCallNum(s948, f, sInitials)
    End If
 
    s901 = "901  " & sInitials & " " & Chr(223) & "b CATBL"
+
+   'strip unwanted MARC tags:
+   'remove subject from unsupported thesauri
+   n = 6
+   nBool = CS.GetFieldLine(n,subhead$)
+   Do While nBool = TRUE
+      If InStr("653", Mid(subhead$, 1, 3)) <> 0 Then
+         CS.DeleteFieldLine n
+      End If      
+      If InStr("600,610,611,630,650,651,655", Mid(subhead$, 1, 3)) <> 0 Then
+         If Mid(subhead$,5,1) = "0" Or Mid(subhead$,5,1) = "1" Or InStr(subhead$, Chr(223) & "2 gsafd") _
+          Or InStr(subhead$, Chr(223) & "2 fast") Or InStr(subhead$, Chr(223) & "2 lcsh") _
+          Or InStr(subhead$, Chr(223) & "2 bidex") Or InStr(subhead$, Chr(223) & "2 lcgft") _
+          Or InStr(subhead$, Chr(223) & "2 gmgpc") Or InStr(subhead$, Chr(223) & "2 lctgm") _
+          Or InStr(subhead$, Chr(223) & "2 aat") Or InStr(subhead$, Chr(223) & "2 BookOps") Then
+            'go to the next one
+            n = n + 1
+         Else
+            'remove apostrophe in the beginning of the line below to display deleted subject headings
+            'MsgBox subhead$
+            CS.DeleteFieldLine n
+         End If
+      Else
+         n = n + 1 
+      End If
+      nBool = CS.GetFieldLine(n,subhead$) 
+   Loop
+   
 
    CS.SetField 1, s901
  CS.EndRecord

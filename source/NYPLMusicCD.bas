@@ -2,7 +2,13 @@
 'MacroDescription:Creates call number for NYPL music CDs ; 
                   'call numbers can be insterted into displayed record or copied into clipboard for pasting into MidWest platform
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: February 05, 2015 (v. 1.1)
+'Last updated: March 17, 2021 (v. 1.3)
+
+'v1.3 details (March 17, 2021):
+'  * removal of MARC tags from unsupported thesauri (keeps lcsh, fast, gsafd, lcgft, bidex, gmgpc, lctgm, att, BookOps
+'v1.2 details:
+'  * catalogers intials file moved to Connexion Profiles directory
+
 'Existing issues: lower screeen resolution may cause failure for drop-down menu to appear (most likely genre since it's rahter long
                  ' at this time the menues have hard coded lenght, in case of problems lower DropBoxCombo & ListBoxCombo
                  ' last value to 200 or less
@@ -71,7 +77,7 @@ Sub Main
             sOutput(1) = "copy to clipboard"
             
          'read default data (initials) from text file stored in macro folder
-         sFileName = "cat_data.txt"
+         sFileName = Mid(Environ(2), 9) + "\OCLC\Connex\Profiles\cat_data.txt"
          If Dir$ (sFileName) <> "" Then
             filenumber = FreeFile
             Open sFileName for Input As filenumber
@@ -363,6 +369,33 @@ Sub InsertCallNumber(sField948, sInitials)
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
    Dim s901$
+   
+   'strip unwanted MARC tags:
+   'remove subject from unsupported thesauri
+   n = 6
+   nBool = CS.GetFieldLine(n,subhead$)
+   Do While nBool = TRUE
+      If InStr("653", Mid(subhead$, 1, 3)) <> 0 Then
+         CS.DeleteFieldLine n
+      End If      
+      If InStr("600,610,611,630,650,651,655", Mid(subhead$, 1, 3)) <> 0 Then
+         If Mid(subhead$,5,1) = "0" Or Mid(subhead$,5,1) = "1" Or InStr(subhead$, Chr(223) & "2 gsafd") _
+          Or InStr(subhead$, Chr(223) & "2 fast") Or InStr(subhead$, Chr(223) & "2 lcsh") _
+          Or InStr(subhead$, Chr(223) & "2 bidex") Or InStr(subhead$, Chr(223) & "2 lcgft") _
+          Or InStr(subhead$, Chr(223) & "2 gmgpc") Or InStr(subhead$, Chr(223) & "2 lctgm") _
+          Or InStr(subhead$, Chr(223) & "2 aat") Or InStr(subhead$, Chr(223) & "2 BookOps") Then
+            'go to the next one
+            n = n + 1
+         Else
+            'remove apostrophe in the beginning of the line below to display deleted subject headings
+            'MsgBox subhead$
+            CS.DeleteFieldLine n
+         End If
+      Else
+         n = n + 1 
+      End If
+      nBool = CS.GetFieldLine(n,subhead$) 
+   Loop
   
    CS.SetField 1, sField948
    CS.SetField 1, "945  .o"
