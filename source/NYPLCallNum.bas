@@ -1,12 +1,12 @@
 'MacroName:NYPL CallNum v.2.6.1
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
-'                  Macro handles call number patterns for English and World Lanugages, fiction, non-fiction, biography and biography with Dewey
-'                  incorporates functions of Format macro - populates subfielf $f 
+'                  Macro handles call number patterns for English and World Lanuguages, fiction, non-fiction, biography and biography with Dewey
+'                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
 'Latest update: March 19, 2021
 
 'v2.6.1 update details (03-19-2021):
-'  * removal of unapproved in NYPL catalog headings (BISACS, SEARS, etc.)
+'  * removal of catalog headings unapproved for use in NYPL catalog (BISACS, SEARS, etc.)
 
 'v2.6.0 update details (01-29-2021):
 '  * first word in cutter (taken from 110) when the main entry is 110 tag in fiction and related call numbers
@@ -14,7 +14,7 @@
 '  * catalogers initials saved to OCLC profile folder instead of general Connexion directory (more likely to have write access)
 
 'v2.5.9 update details:
-'  * complete elimination of 11 characters rule in cutter for non-latin materials - only last name used or first letter
+'  * complete elimination of 11 characters rule in cutter for non-Latin materials - only last name used or first letter
 '    (cutter in subfield $c)
 
 'v2.5.8 update details:
@@ -29,11 +29,11 @@
 '  * bug fix: underscore nonspacing character (Chr(246)) handling fixed
 
 'v2.5.5 update details:
-'  * bug fix: proper behaviour if no bibliographic record displayed
+'  * bug fix: proper behavior if no bibliographic record displayed
 '  * added flag for short stories collections
 
 'v2.5.4 update details:
-'  *bug fix: removes flase fiction flag for Graphic Novels
+'  *bug fix: removes false fiction flag for Graphic Novels
 '  *improvement: diactritics function simplified and made more comprehensive
 '  *bug fix: corrected broken format error flags
 '  *rules change: authors name for literary collection changed from $b to $c
@@ -125,7 +125,7 @@ Sub Main
       End If
          
 
-      'Dialog box presenting to a cataloger choices for types of call numbers
+      'Dialog box presenting cataloger choices for types of call numbers
       Begin Dialog MainWindow 220, 220, "NYPL Call Number Macro v. 2.5.3"
          
          'top-left outline
@@ -182,7 +182,7 @@ Sub Main
             dCallNum.sFormat = 2
          End If
       ElseIf sRecType = "j" Then
-         MsgBox "Please consider using NYPLMusicCD macro instead. The record appeared to be a music CD"
+         MsgBox "Please consider using NYPLMusicCD macro instead. The record appears to be a music CD"
       ElseIf sRecType = "g" And sTMat = "v" Then
          bool538 = CS.GetField("538", 1, s538)
          If bool538 = TRUE Then
@@ -209,7 +209,7 @@ Sub Main
       sLang = UCase(sLang)
       If sLang = "" Or sLang = "UND" Then
          sLang = Chr(252)
-         MsgBox "INCOMPLETE: Please correct languge coding in the fixed field and the call number."
+         MsgBox "INCOMPLETE: Please correct language coding in the fixed field and the call number."
       End If
       If a = 0 Then
          If sLang <> "ENG" Then
@@ -231,7 +231,7 @@ Sub Main
       
       Call ElemArray(sElemArr, n100, n600)
       
-'  define the reminder of 948 field
+'  define the remainder of 948 field
       s948 = "948  " & sAudnLangPrefix & sFormatPrefix
       Select Case dCallNum.Type
          Case 0
@@ -330,7 +330,7 @@ End Sub
 '########################################################################
 
 Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
-   'rules of creating reminder of the call number 
+   'rules for creating the remainder of the call number 
    Dim sLastChr$, sMainEntry$
    Dim start_point, end_point As Integer
    
@@ -405,7 +405,7 @@ Rule3:
    sMainEntry = Mid(sMainEntry, 6, 1)
   
    If sNameChoice <> Chr(252) Then
-      'cut off each section to the right of comma chr until none is left
+      'cut off each section to the right of comma chr until none are left
       Do While InStr(sNameChoice, ",")
          place = InStr(sNameChoice, ",")
          sNameChoice = RTrim(Left(sNameChoice, place - 1))
@@ -431,7 +431,7 @@ Rule3:
    Goto Done
 
 Rule4:
-   'mov, tvs: Latin - first letter of 245 ; Non-Latin - 11 characters of 245; obsolete efective 08/01/2018 (v.2.5.6)
+   'mov, tvs: Latin - first letter of 245 ; Non-Latin - 11 characters of 245; obsolete effective 08/01/2018 (v.2.5.6)
    If InStr(sElemArr, "245: ") <> 0 Then
       start_point = InStr(sElemArr, "245: ")
       sTemp = Mid(sElemArr, start_point)
@@ -458,7 +458,7 @@ Rule5:
       End If
       sCutter = " " & Chr(223) & "c " & sCutter 
    Else
-      MsgBox "MISSING INFO: No valid 245 MARC field for a cutter. Please check your record."
+      MsgBox "MISSING INFO: No valid 245 MARC field for cutter. Please check your record."
       sCutter = " " & Chr(223) & "c " & sCutter
    End If
    Goto Done
@@ -627,7 +627,7 @@ End Sub
 '########################################################################
 
 Function Dewey(a)
-'creates string with Dewey number taken from 082 field; 4 digits after period for adult materials, 2 digitst for juvenile; stirps 0s at the end
+'creates string with Dewey number taken from 082 field; 4 digits after period for adult materials, 2 digits for juvenile; strips 0s at the end
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
    Dim s082$, sLastDigit$
@@ -839,7 +839,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
       If InStr("gfi,mov,tvs", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       ElseIf sItemForm = "d" Then
-         MsgBox "FORMAT conflict: Please verify format selection. It appears format should be LG PRINT"
+         MsgBox "FORMAT conflict: Please verify format selection. It appears that the format should be LG PRINT"
       End If
    ElseIf f = 1 Or f = 4 Then
       'format BlueRay or DVD
@@ -904,7 +904,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
    If sRecType = "a" Then
       If InStr("1fj", sLitF) <> 0 Then
          If InStr("eas,pic,fic,gfi,mys,rom,sci,urb,wes", sCallType) = 0 Then
-            MsgBox "LITERARY FORM conflict: Fixed field indicates the material is work of fiction. Please verify your selection."
+            MsgBox "LITERARY FORM conflict: Fixed field indicates the material is a work of fiction. Please verify your selection."
          End If
       Else
          If InSTr("fic,gfi,mys,rom,sci,urb,wes", sCallType) <> 0 Then
