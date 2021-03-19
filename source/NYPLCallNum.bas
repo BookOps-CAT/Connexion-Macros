@@ -985,7 +985,7 @@ Sub InsertCallNum(s948, f, sInitials)
             n = n + 1
          Else
             'remove apostrophe in the beginning of the line below to display deleted subject headings
-            MsgBox subhead$
+            'MsgBox subhead$
             CS.DeleteFieldLine n
          End If
       Else
