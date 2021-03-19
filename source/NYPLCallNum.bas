@@ -49,6 +49,7 @@ Declare Sub Diacritics(sNameTitle)
 Declare Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
 Declare Sub InsertCallNum(s948, f, sInitials)
 Declare Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s948)
+Declare Sub CleanSubjects()
 
 'temporary variables
 Dim place, i as Integer
@@ -315,6 +316,9 @@ Sub Main
          
          'insert call number & other strings
          Call InsertCallNum(s948, f, sInitials)
+         
+         'clean up subjects
+         Call CleanSubjects()
       End If
       
    Else
@@ -933,12 +937,57 @@ End Sub
 
 '########################################################################
 
+Sub CleanSubjects()
+   Dim CS as Object
+   Set CS = CreateObject("Connex.Client")
+   Dim sTag$
+   Dim nBool
+   Dim n As Integer
+   Dim DelArr(6 to 99) As Integer
+   
+   'strip unwanted MARC tags:
+   'remove subject from unsupported thesauri
+  
+   n = 6
+   nBool = CS.GetFieldLine(n,stag$)
+   Do While nBool = TRUE
+      If Left(sTag$, 1) = "6" Then
+         If InStr("653,654", Mid(sTag$, 1, 3)) <> 0 Then
+            DelArr(n) = n
+            'CS.DeleteFieldLine, n
+         ElseIf InStr("600,610,611,630,650,651,655", Mid(sTag$, 1, 3)) <> 0 Then
+            If Mid(sTag$,5,1) = "0" Or Mid(sTag$,5,1) = "1" Or InStr(sTag$, Chr(223) & "2 gsafd") _
+               Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
+               Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
+               Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
+               Or InStr(sTag$, Chr(223) & "2 aat") Or InStr(sTag$, Chr(223) & "2 BookOps") Then
+                  'do nothing, go to the next one
+            Else
+               'remove apostrophe in the beginning of the line below to display deleted subject headings
+               DelArr(n) = n
+            End If
+         End If
+      End If
+      n = n + 1
+      nBool = CS.GetFieldLine(n,sTag$)
+   Loop
+   
+   For n = 99 to 6 Step -1
+      'MsgBox "n:" & n
+      If DelArr(n) <> 0 Then
+         i = DelArr(n)
+         CS.DeleteFieldLine i
+      End If
+   Next
+
+End Sub
+
+'########################################################################
+
 Sub InsertCallNum(s948, f, sInitials)
    Dim CS as Object
    Set CS = CreateObject("Connex.Client")
    Dim s901$
-   Dim subhead$
-   Dim n As Integer
    Dim nBool
    
    CS.SetField 1, s948
@@ -966,33 +1015,6 @@ Sub InsertCallNum(s948, f, sInitials)
    s901 = "901  " & sInitials & " " & Chr(223) & "b CATBL"
 
    CS.SetField 1, s901
-   
-   'strip unwanted MARC tags:
-   'remove subject from unsupported thesauri
-   n = 6
-   nBool = CS.GetFieldLine(n,subhead$)
-   Do While nBool = TRUE
-      If InStr("653", Mid(subhead$, 1, 3)) <> 0 Then
-         CS.DeleteFieldLine n
-      End If      
-      If InStr("600,610,611,630,650,651,655", Mid(subhead$, 1, 3)) <> 0 Then
-         If Mid(subhead$,5,1) = "0" Or Mid(subhead$,5,1) = "1" Or InStr(subhead$, Chr(223) & "2 gsafd") _
-          Or InStr(subhead$, Chr(223) & "2 fast") Or InStr(subhead$, Chr(223) & "2 lcsh") _
-          Or InStr(subhead$, Chr(223) & "2 bidex") Or InStr(subhead$, Chr(223) & "2 lcgft") _
-          Or InStr(subhead$, Chr(223) & "2 gmgpc") Or InStr(subhead$, Chr(223) & "2 lctgm") _
-          Or InStr(subhead$, Chr(223) & "2 aat") Or InStr(subhead$, Chr(223) & "2 BookOps") Then
-            'go to the next one
-            n = n + 1
-         Else
-            'remove apostrophe in the beginning of the line below to display deleted subject headings
-            'MsgBox subhead$
-            CS.DeleteFieldLine n
-         End If
-      Else
-         n = n + 1 
-      End If
-      nBool = CS.GetFieldLine(n,subhead$) 
-   Loop
    
  CS.EndRecord
 End Sub
