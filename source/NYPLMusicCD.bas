@@ -5,7 +5,7 @@
 'Last updated: March 17, 2021 (v. 1.3)
 
 'v1.3 details (March 17, 2021):
-'  * removal of MARC tags from unsupported thesauri (keeps lcsh, fast, gsafd, lcgft, bidex, gmgpc, lctgm, att, BookOps
+'  * removal of MARC tags from unsupported thesauri (keeps lcsh, fast, gsafd, lcgft, bidex, gmgpc, lctgm, att, BookOps)
 'v1.2 details:
 '  * catalogers intials file moved to Connexion Profiles directory
 
