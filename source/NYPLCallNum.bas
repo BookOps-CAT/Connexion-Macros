@@ -973,10 +973,8 @@ Sub CleanSubjects()
    Loop
    
    For n = 99 to 6 Step -1
-      'MsgBox "n:" & n
       If DelArr(n) <> 0 Then
-         i = DelArr(n)
-         CS.DeleteFieldLine i
+         CS.DeleteFieldLine DelArr(n)
       End If
    Next
 
