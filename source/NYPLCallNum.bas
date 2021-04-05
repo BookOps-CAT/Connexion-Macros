@@ -3,9 +3,9 @@
 '                  Macro handles call number patterns for English and World Lanuguages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: March 19, 2021
+'Latest update: April 5, 2021
 
-'v2.6.1 update details (03-19-2021):
+'v2.6.1 update details (04-05-2021):
 '  * removal of catalog headings unapproved for use in NYPL catalog (BISACS, SEARS, etc.)
 
 'v2.6.0 update details (01-29-2021):
@@ -954,7 +954,7 @@ Sub CleanSubjects()
       If Left(sTag$, 1) = "6" Then
          If InStr("653,654", Mid(sTag$, 1, 3)) <> 0 Then
             DelArr(n) = n
-            'CS.DeleteFieldLine, n
+            'MsgBox sTag$
          ElseIf InStr("600,610,611,630,650,651,655", Mid(sTag$, 1, 3)) <> 0 Then
             If Mid(sTag$,5,1) = "0" Or Mid(sTag$,5,1) = "1" Or InStr(sTag$, Chr(223) & "2 gsafd") _
                Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
@@ -963,7 +963,7 @@ Sub CleanSubjects()
                Or InStr(sTag$, Chr(223) & "2 aat") Or InStr(sTag$, Chr(223) & "2 BookOps") Then
                   'do nothing, go to the next one
             Else
-               'remove apostrophe in the beginning of the line below to display deleted subject headings
+               'MsgBox sTag$
                DelArr(n) = n
             End If
          End If
@@ -974,7 +974,7 @@ Sub CleanSubjects()
    
    For n = 99 to 6 Step -1
       If DelArr(n) <> 0 Then
-         CS.DeleteFieldLine DelArr(n)
+         CS.DeleteFieldLine n
       End If
    Next
 
