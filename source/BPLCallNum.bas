@@ -7,30 +7,37 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: January 29, 2021 (v. 2.4)
-'v1.7 changes:
-'  *improved and simplified diactriticts function
-'v1.8 changes:
-'  * DVD call number cutter includes full first word of title
-'  * bug fix: underscore nonspacing character (Chr(246)) handling fixed
-'v1.9 changes:
-'  * Readalong format support
-'  * Chinese lit time table handling added
-'v2.0 changes:
-'  * feature DVD call number includes one of two type prefixes: TV and MOVIE
-'v2.1 changes:
-'  * bug fix: corrected removal of time table numbers from Russian literature
-'v2.2 changes:
-'  * autobiography cutter changes: main entry used for the cutter instead of the title entry
-'v2.3 changes:
-'  * file with cataloger initials stored now in OCLC's profile directory
+'Last updated: April 5, 2021 (v. 2.5)
+
+
+'v2,5 changes:
+'  * refactoring of removal of unwanted subject headings
 'v2.4 changes:
 '  * title entry J-E have cutter consisting of the first letter of the title, switch from Rule 1 to Rule 2 (same as fiction)
 '  * cuttering of titles with corporate main entry (110 tag) changed to full first word
+'v2.3 changes:
+'  * file with cataloger initials stored now in OCLC's profile directory
+'v2.2 changes:
+'  * autobiography cutter changes: main entry used for the cutter instead of the title entry
+'v2.1 changes:
+'  * bug fix: corrected removal of time table numbers from Russian literature
+'v2.0 changes:
+'  * feature DVD call number includes one of two type prefixes: TV and MOVIE
+'v1.9 changes:
+'  * Readalong format support
+'  * Chinese lit time table handling added
+'v1.8 changes:
+'  * DVD call number cutter includes full first word of title
+'  * bug fix: underscore nonspacing character (Chr(246)) handling fixed
+'v1.7 changes:
+'  *improved and simplified diactriticts function
+
+
 
 Declare Function Dewey(sAudn,sCallType)
 Declare Function FileDlgFunction(identifier$, action, suppvalue)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
+Declare Sub CleanSubjects()
 Declare Sub CutterArray(sCutterArr,sCallType,sDewey)
 Declare Sub SubjectChoice(sSubjectArr)
 Declare Sub Diacritics(sNameTitle)
@@ -298,6 +305,9 @@ CaseType:
          Open sFileName for Output As filenumber
          Print #filenumber, sInitials
          Close #filenumber
+         
+         'clean subject fields
+         Call CleanSubjects()
          
          'insert call number
          s099 = s099 & sCutter
@@ -1328,6 +1338,51 @@ CutterCheck:
       MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spell out number in the language of the cataloged material."
    End If
    
+End Sub
+
+'########################################################################
+
+Sub CleanSubjects()
+   Dim CS as Object
+   Set CS = CreateObject("Connex.Client")
+   Dim sTag$
+   Dim nBool
+   Dim n As Integer
+   Dim DelArr(6 to 99) As Integer
+   
+   'strip unwanted MARC tags:
+   'remove subject from unsupported thesauri
+  
+   n = 6
+   nBool = CS.GetFieldLine(n,stag$)
+   Do While nBool = TRUE
+      If Left(sTag$, 1) = "6" Then
+         If InStr("653,654", Mid(sTag$, 1, 3)) <> 0 Then
+            DelArr(n) = n
+            'MsgBox sTag$
+         ElseIf InStr("600,610,611,630,650,651,655", Mid(sTag$, 1, 3)) <> 0 Then
+            If Mid(sTag$,5,1) = "0" Or Mid(sTag$,5,1) = "1" Or InStr(sTag$, Chr(223) & "2 gsafd") _
+               Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
+               Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
+               Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
+               Or InStr(sTag$, Chr(223) & "2 aat") Or InStr(sTag$, Chr(223) & "2 BookOps") Then
+                  'do nothing, go to the next one
+            Else
+               'MsgBox sTag$
+               DelArr(n) = n
+            End If
+         End If
+      End If
+      n = n + 1
+      nBool = CS.GetFieldLine(n,sTag$)
+   Loop
+   
+   For n = 99 to 6 Step -1
+      If DelArr(n) <> 0 Then
+         CS.DeleteFieldLine n
+      End If
+   Next
+
 End Sub
 
 '##################################################
