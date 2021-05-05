@@ -7,10 +7,11 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: April 5, 2021 (v. 2.5)
+'Last updated: May 6, 2021 (v. 2.6)
 
-
-'v2,5 changes:
+'v2.6 changes:
+'  * removal of the S52 segment from call numbers for Shakespeare
+'v2.5 changes:
 '  * refactoring of removal of unwanted subject headings
 'v2.4 changes:
 '  * title entry J-E have cutter consisting of the first letter of the title, switch from Rule 1 to Rule 2 (same as fiction)
@@ -854,8 +855,7 @@ Sub LocalDewey(s082,sCallType)
    
    'Shakespeare call number
    If sClassNum = "822.33" Then
-      s082 = s082 & " " & Chr(223) & "a " & "S52"
-      MsgBox "INCOMPLETE: Please correct the cutter. Call number for Shakespeare includes Dewey number, Sanborn cutter S52, letter and number from Dewey optional table, and picked by cataloger cutter, example: 822.33 S52 S7 G (Hamlet - text, edited by R.Gill)"
+      MsgBox "INCOMPLETE: Please correct the cutter. Call number for Shakespeare includes Dewey number, letter and number from Dewey optional table, and picked by cataloger cutter, example: 822.33 S7 G (Hamlet - text, edited by R.Gill). Please do not use cuttering created by the macro."
       Goto Done
    End If
    'specific programming languages
