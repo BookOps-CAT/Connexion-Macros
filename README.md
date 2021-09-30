@@ -34,6 +34,8 @@ Done!
 	* BibcoEval (CATBibcoEval.bas)
 	* UpdateExport (CATUpdateExport.bas)
     * ShareSave (CATShareSave.bas)
+    * NewUserDual (CATUserDual.bas)
+    * NewUserNYP (CATUserNYP.bas)
 4. ACQ.mbk macrobook
 	* RLOrderRec (ACQRLOrderRec.bas)
 5. NewMacros.mbk macrobook
