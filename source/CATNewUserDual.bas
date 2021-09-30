@@ -2,7 +2,7 @@
 'MacroDescription:NewUserDual macro creates dual NYPL & BPL profiles and default settings for each.
 '                 Use for onboarding new staff.
 'Macro create by: Tomasz Kalata, BookOps
-'Last updated: September 29, 2021
+'Last updated: September 30, 2021
 
 Declare Sub EraseFolder(sFolder)
 Declare Sub MoveFiles(sSrcFolder, sDstFolder)
@@ -17,7 +17,7 @@ Sub Main
   
    sConnexFolder = Environ("APPDATA") & "\OCLC\Connex\"
    sUserProfileFolder = sConnexFolder & "Profiles\"
-   sSrcFolder = "S:\CATAL\Connex\onboarding\dual\"
+   sSrcFolder = "S:\CATAL\Connex\"
    
    Begin Dialog WarnDialog 150, 90, "Set Up New User"
    
@@ -37,19 +37,17 @@ Sub Main
    If z = -1 Then
       'update macros
       MkDir(sConnexFolder & "Macros")
-      Call EraseFolder(sConnexFolder & "Macros")
+      Call EraseFolder(sConnexFolder & "Macros\")
       CS.RunMacro("newMacros.mbk!CATupdater")
-      
-      MsgBox "Macros updated"
    
       ' delete Connects.ini
       Kill(sConnexFolder & "Connects.ini")
       
       'clean up any Profiles/NYPL & Profiles/BPL folders
       Call EraseFolder(sUserProfileFolder)
-      Call EraseFolder(sUserProfileFolder & "BPL")
-      Call EraseFolder(sUserProfileFolder & "NYPL")
-      Call EraseFolder(sUserProfileFolder & "MyProfile")
+      Call EraseFolder(sUserProfileFolder & "BPL\")
+      Call EraseFolder(sUserProfileFolder & "NYPL\")
+      Call EraseFolder(sUserProfileFolder & "MyProfile\")
       'delete default profile
       RmDir(sUserProfileFolder & "MyProfile\")
       
@@ -58,10 +56,10 @@ Sub Main
       MkDir(sUserProfileFolder & "NYPL")
 
       'recreate settings from the shared drive
-      FileCopy sSrcFolder & "Connects.ini", sConnexFolder & "Connects.ini"
-      FileCopy sSrcFolder & "Profiles\" & "Profile.xml", sConnexFolder & "Profiles\" & "Profile.xml"
-      Call MoveFiles(sSrcFolder & "Profiles\BPL\", sConnexFolder & "Profiles\BPL\")
-      Call MoveFiles(sSrcFolder & "Profiles\NYPL\", sConnexFolder & "Profiles\NYPL\")
+      FileCopy sSrcFolder & "onboarding\dual\Connects.ini", sConnexFolder & "Connects.ini"
+      FileCopy sSrcFolder & "onboarding\dual\Profiles\" & "Profile.xml", sConnexFolder & "Profiles\" & "Profile.xml"
+      Call MoveFiles(sSrcFolder & "onboarding\dual\Profiles\BPL\", sConnexFolder & "Profiles\BPL\")
+      Call MoveFiles(sSrcFolder & "onboarding\dual\Profiles\NYPL\", sConnexFolder & "Profiles\NYPL\")
       
       MsgBox "Dual profiles created!"
       
