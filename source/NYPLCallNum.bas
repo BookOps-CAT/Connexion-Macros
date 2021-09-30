@@ -1,9 +1,13 @@
-'MacroName:NYPL CallNum v.2.6.1
+'MacroName:NYPL CallNum v.2.7.0
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
 '                  Macro handles call number patterns for English and World Lanuguages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: April 5, 2021
+'Latest update: September 30, 2021
+
+'v2.7.0 update details(09-30-2021):
+' GN FIC call number eleminated and incorrporated into FIC
+' BRAILLE format added
 
 'v2.6.1 update details (04-05-2021):
 '  * removal of catalog headings unapproved for use in NYPL catalog (BISACS, SEARS, etc.)
@@ -88,7 +92,7 @@ Sub Main
       End If
       s300 = UCase(s300)
       
-      ReDim sFormat(11)
+      ReDim sFormat(12)
          sFormat(0) = " "
          sFormat(1) = "BLURAY"
          sFormat(2) = "CD"
@@ -101,6 +105,7 @@ Sub Main
          sFormat(9) = "LG PRINT"
          sFormat(10) = "YR"
          sFormat(11) = "READALONG"
+         sFormat(12) = "BRAILLE"
       ReDim sAudience(1)
          sAudience(0) = "JUVENILE"
          sAudience(1) = "ADULT"
@@ -127,7 +132,7 @@ Sub Main
          
 
       'Dialog box presenting cataloger choices for types of call numbers
-      Begin Dialog MainWindow 220, 220, "NYPL Call Number Macro v. 2.5.3"
+      Begin Dialog MainWindow 220, 220, "NYPL Call Number Macro"
          
          'top-left outline
          GroupBox 18, 50, 85, 41, ""
@@ -144,7 +149,6 @@ Sub Main
          OptionButton  24,  115, 70, 14, "&DEWEY"
          OptionButton  24,  135, 70, 14, "DEWEY + &NAME"
          OptionButton  24,  155, 70, 14, "&FICTION"
-         OptionButton  24,  175, 70, 14, "&GN FICTION"
          OptionButton  125,  55, 70, 14, "&MYSTERY"
          OptionButton  125,  75, 70, 14, "&ROMANCE"
          OptionButton  125,  95, 70, 14, "&SCI FI"
@@ -164,17 +168,22 @@ Sub Main
          CancelButton   115, 195,  55, 16
       End Dialog
       Dim dCallNum as MainWindow
-      'selects most likely audience, format
+      
+      'selects most likely audience
       If InStr("abcj", sAudn) <> 0 And sAudn <> "" Then
          dCallNum.sAudience = 0
       Else
          dCallNum.sAudience = 1
       End If
+      
+      'select most likely format
       If sRecType = "a" Then
          If InStr(sCont, "6") <> 0 Then
             dCallNum.sFormat = 6
          ElseIf sItemForm = "d" Then
             dCallNum.sFormat = 9
+         ElseIf sItemForm = "f" Then
+            dCallNum.sFormat = 12
          End If
       ElseIf sRecType = "i" Then
          If InStr(s300, "AUDIO-ENABLED BOOK") <> 0 Or InStr(s300, "AUDIO ENABLED BOOK") <> 0 Then
@@ -197,6 +206,7 @@ Sub Main
             dCallNum.sFormat = 4
          End If
       End If
+
       'populate INITIALS box with default value
       dCallNum.sInitials = sDefaultInitials
       
@@ -260,28 +270,24 @@ Sub Main
             sCallType = "fic"
             s948 = s948 & Chr(223) & "a FIC"
          Case 6
-            sCallType = "gfi"
-            dCallNum.sFormat = 7
-            s948 = s948 & Chr(223) & "a GN FIC"
-         Case 7
             sCallType = "mys"
             s948 = s948 & Chr(223) & "a MYSTERY"
-         Case 8
+         Case 7
             sCallType = "rom"
             s948 = s948 & Chr(223) & "a ROMANCE"
-         Case 9
+         Case 8
             sCallType = "sci"
             s948 = s948 & Chr(223) & "a SCI FI"
-         Case 10
+         Case 9
             sCallType = "urb"
             s948 = s948 & Chr(223) & "a URBAN"
-         Case 11
+         Case 10
             sCallType = "wes"
             s948 = s948 & Chr(223) & "a WESTERN"
-         Case 12
+         Case 11
             sCallType = "mov"
             s948 = s948 & Chr(223) & "a MOVIE"
-         Case 13
+         Case 12
             sCallType = "tvs"
             s948 = s948 & Chr(223) & "a TV"
       End Select
@@ -363,7 +369,7 @@ Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
    End If
    
    'determine rule to apply
-   If InStr("eas,pic,fic,gfi,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+   If InStr("eas,pic,fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
       Goto Rule1
    ElseIf sCallType = "dew" Then
       Goto Rule2
@@ -374,7 +380,7 @@ Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
    End If
   
 Rule1:
-   'fic, eas, pic, urb, sci, wes, rom, gfi, mys: last name of author, first word of 110 or first letter of 245
+   'fic, eas, pic, urb, sci, wes, rom, mys: last name of author, first word of 110 or first letter of 245
    If Left(sMainEntry, 3) = "100" Then
       sMainEntry = Mid(sMainEntry, 6)
       Do While InStr(sMainEntry, ",")
@@ -840,14 +846,14 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
    'format related conflicts
    If f = 0 Then
       'format empty
-      If InStr("gfi,mov,tvs", sCallType) <> 0 Then
+      If InStr("mov,tvs", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       ElseIf sItemForm = "d" Then
          MsgBox "FORMAT conflict: Please verify format selection. It appears that the format should be LG PRINT"
       End If
    ElseIf f = 1 Or f = 4 Then
       'format BlueRay or DVD
-      If InStr("eas,pic,fic,gfi,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+      If InStr("eas,pic,fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       End If
       If sRecType <> "g" And sTMat <> "v" Then
@@ -872,7 +878,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
       End If
    ElseIf f = 7 Then
       'format HOLIDAY
-      If InStr("den,bio,gfi,mys,rom,sci,urb,wes,mov,tvs", sCallType) <> 0 Then
+      If InStr("den,bio,mys,rom,sci,urb,wes,mov,tvs", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       ElseIf InStr("abcj", sAudn) = 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
@@ -884,7 +890,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
       End If
    ElseIf f = 9 Then
       'format LG PRINT
-      If InStr("eas,pic,gfi,mov,tvs", sCallType) <> 0 Then
+      If InStr("eas,pic,mov,tvs", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       ElseIf sItemForm <> "d" Then
          MsgBox "FORMAT conflict: Please verify format selection and item form coding."
@@ -902,16 +908,21 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
       If a = 1 Then
          MsgBox "AUDIENCE conflict: Please verify audience selection and format. READALONG format is valid only for juvenile materials."
       End If
+   ElseIf f = 12 Then
+      'format Braille
+      If sCallType <> "fic" And sCallType <> "dew" And sCallType <> "bio" And sCallType <> "pic" And sCallType <> "den" Then
+         MsgBox "FORMAT conflict: Please verify format selection adn call number type. BRAILLE format is valid only for picture books, fiction, dewey, dewey+subject, and biography call numbers."
+      End If
    End If
    
    'content validation
    If sRecType = "a" Then
       If InStr("1fj", sLitF) <> 0 Then
-         If InStr("eas,pic,fic,gfi,mys,rom,sci,urb,wes", sCallType) = 0 Then
+         If InStr("eas,pic,fic,mys,rom,sci,urb,wes", sCallType) = 0 Then
             MsgBox "LITERARY FORM conflict: Fixed field indicates the material is a work of fiction. Please verify your selection."
          End If
       Else
-         If InSTr("fic,gfi,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+         If InSTr("fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
             MsgBox "LITERARY FORM conflict: Fixed field indicates the material is non-fiction work. Please verify your selection."
          End If
       End If
