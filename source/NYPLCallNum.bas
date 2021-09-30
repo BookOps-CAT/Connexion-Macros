@@ -1,12 +1,12 @@
 'MacroName:NYPL CallNum v.2.7.0
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
-'                  Macro handles call number patterns for English and World Lanuguages, fiction, non-fiction, biography and biography with Dewey
+'                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
 'Latest update: September 30, 2021
 
 'v2.7.0 update details(09-30-2021):
-' GN FIC call number eleminated and incorrporated into FIC
+' GN FIC call number eliminated and incorporated into FIC
 ' BRAILLE format added
 
 'v2.6.1 update details (04-05-2021):
@@ -38,7 +38,7 @@
 
 'v2.5.4 update details:
 '  *bug fix: removes false fiction flag for Graphic Novels
-'  *improvement: diactritics function simplified and made more comprehensive
+'  *improvement: diacritics function simplified and made more comprehensive
 '  *bug fix: corrected broken format error flags
 '  *rules change: authors name for literary collection changed from $b to $c
 '  *improvement: added validation error flag for Dewey + Name call numbers that are not in 7xx or 8xx range
@@ -789,7 +789,7 @@ Sub Diacritics(sNameTitle)
          'oe lower & uppercase
          Case Chr(182), Chr(166)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "oe" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
-         'l with slash upper & loawercase
+         'l with slash upper & lowercase
          Case Chr(161), Chr(177)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "l" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
          'o with hook or slash
@@ -807,7 +807,7 @@ Sub Diacritics(sNameTitle)
          Case "'", Chr(176), Chr(174), Chr(167)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
             i = i - 1
-'        commmented out for update v. 2.5.6. - these characters are allowed in cutters for visual materials effective 08/01/2018
+'        commented out for update v. 2.5.6. - these characters are allowed in cutters for visual materials effective 08/01/2018
 '         Case ".", ":", ";", "/"
 '            sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
 '            i = i - 1
@@ -817,7 +817,7 @@ Sub Diacritics(sNameTitle)
    Wend
    sNameTitle = UCase(sNameTitle)
 '  update v.2.5.8: period should not be allowed as the last element of cutter
-'                 - a bug introdued in v. 2.5.6 when period was allowed in DVD call numbers 
+'                 - a bug introduced in v. 2.5.6 when period was allowed in DVD call numbers 
    If Right(sNameTitle, 1) = "." Then
       sNameTitle = Left(sNameTitle, Len(sNameTitle) - 1)
    End If
@@ -911,7 +911,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
    ElseIf f = 12 Then
       'format Braille
       If sCallType <> "fic" And sCallType <> "dew" And sCallType <> "bio" And sCallType <> "pic" And sCallType <> "den" Then
-         MsgBox "FORMAT conflict: Please verify format selection adn call number type. BRAILLE format is valid only for picture books, fiction, dewey, dewey+subject, and biography call numbers."
+         MsgBox "FORMAT conflict: Please verify format selection and call number type. BRAILLE format is valid only for picture books, fiction, dewey, dewey+subject, and biography call numbers."
       End If
    End If
    
@@ -923,7 +923,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
          End If
       Else
          If InSTr("fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
-            MsgBox "LITERARY FORM conflict: Fixed field indicates the material is non-fiction work. Please verify your selection."
+            MsgBox "LITERARY FORM conflict: Fixed field indicates the material is a non-fiction work. Please verify your selection."
          End If
       End If
       If sBiog = "" Then
