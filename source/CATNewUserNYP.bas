@@ -2,7 +2,7 @@
 'MacroDescription:NewUserNYP creates NYPL profile with default Connexion settings (export, macros, etc.)
 '                 Use for onboarding new staff.
 'Macro create by: Tomasz Kalata, BookOps
-'Last updated: September 30, 2021
+'Last updated: October 4, 2021
 
 Declare Sub EraseFolder(sFolder)
 Declare Sub MoveFiles(sSrcFolder, sDstFolder)
@@ -38,7 +38,7 @@ Sub Main
       'update macros
       MkDir(sConnexFolder & "Macros")
       Call EraseFolder(sConnexFolder & "Macros")
-      CS.RunMacro("newMacros.mbk!CATupdater")
+      CS.RunMacro("newMacros.mbk!Updater")
    
       ' delete Connects.ini
       Kill(sConnexFolder & "Connects.ini")

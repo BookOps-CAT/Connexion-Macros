@@ -18,27 +18,36 @@ Sub Main
    Dim Synced
   
    Synced = FALSE
-  
-   ' remote macro folder on the shared drive
-   If Dir("S:\CATAL\Connex\macros\") <> "" Then
-      RemoteFolder = "S:\CATAL\Connex\macros\"
-   ElseIf Dir("S:\ACQUI\ACQ OCLC Macro Updater\") <> "" Then
-      RemoteFolder = "S:\ACQUI\ACQ OCLC Macro Updater\"
-   Else
-      MsgBox "Error. User " & Environ("USERNAME") & " does not have access S drive (ACQUI or CATAL)."
-      Goto Done
-   End If
    
-   ' local macro folder for Connex 2.63 or 3.0
-   If Dir("C:\Program Files (x86)\OCLC\Connexion\Program\Program\") <> "" Then
-      LocalFolder = "C:\Program Files (x86)\OCLC\Connexion\Program\Macros\"
-   Else
+   
+   ' Determine where install new macros depending on Connexion version
+   ' Connexion 3.0 gets preferrence
+    If Dir("C:\Program Files\OCLC\Connexion\Program\") <> "" Then
+
       LocalFolder = Environ("APPDATA") & "\OCLC\Connex\Macros\"
-   End If
+      
+      If Dir("S:\CATAL\Connex\macros\") <> "" Then
+         RemoteFolder = "S:\CATAL\Connex\macros\"
+      ElseIf Dir("S:\ACQUI\Connex3macros\") <> "" Then
+         RemoteFolder = "S:\ACQUI\Connex3macros\"
+      End If
+      
+    ElseIf Dir("C:\Program Files (x86)\OCLC\Connexion\Program\") <> "" Then
+      
+      LocalFolder = "C:\Program Files (x86)\OCLC\Connexion\Program\Macros\"
+      
+      If Dir("S:\CATAL\BookOps-Cataloging\OCLC Connexion Macros\Macro Updater\") <> "" Then
+         RemoteFolder = "S:\CATAL\BookOps-Cataloging\OCLC Connexion Macros\Macro Updater\"
+      ElseIf Dir("S:\ACQUI\ACQ OCLC Macro Updater\") <> "" Then
+         RemoteFolder = "S:\ACQUI\ACQ OCLC Macro Updater\"
+      End If
     
+    End If
+
+
    sFName = Dir(RemoteFolder & "*.mbk")
    If Len(sFName) = 0 Then
-      MsgBox "Can't connect to the shared folder at: " & RemoteFolder & ", or the shared folder has been emptied. Exiting..."
+      MsgBox "Can't connect to the shared folder at: " & RemoteFolder & ". Exiting..."
       Goto Done
    End If
    ReDim DirArr(0)
