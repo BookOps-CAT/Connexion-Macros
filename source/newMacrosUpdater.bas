@@ -1,13 +1,9 @@
-'MacroName:CATupdater
-'MacroDescription:Synchronizes local macro books with those on the shared drive
+'MacroName:Updater
+'MacroDescription:Synchronizes local macro books with those on the shared drive for both CAT and ACQ departments. Works with Connexion client
+'                 2.63 and 3.0.
 'Macro written by: Joel Hahn, Niles Public Library District
 'Macro modified by: Tomasz Kalata, BookOps
 'Last modified: October 4, 2021
-
-'v2.0 changes (10/4/2021):
-'  * remote folder moved to S:\CATAL\Connex\macros\"
-'  * support for Connexion client 2.63 & 3.0
-'  * Improved updates messages
 
 Sub Main
 
@@ -22,7 +18,18 @@ Sub Main
    Dim Synced
   
    Synced = FALSE
-   RemoteFolder = "S:\CATAL\Connex\macros\"
+  
+   ' remote macro folder on the shared drive
+   If Dir("S:\CATAL\Connex\macros\") <> "" Then
+      RemoteFolder = "S:\CATAL\Connex\macros\"
+   ElseIf Dir("S:\ACQUI\ACQ OCLC Macro Updater\") <> "" Then
+      RemoteFolder = "S:\ACQUI\ACQ OCLC Macro Updater\"
+   Else
+      MsgBox "Error. User " & Environ("USERNAME") & " does not have access S drive (ACQUI or CATAL)."
+      Goto Done
+   End If
+   
+   ' local macro folder for Connex 2.63 or 3.0
    If Dir("C:\Program Files (x86)\OCLC\Connexion\Program\Program\") <> "" Then
       LocalFolder = "C:\Program Files (x86)\OCLC\Connexion\Program\Macros\"
    Else
