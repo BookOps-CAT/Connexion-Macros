@@ -36,7 +36,7 @@ Sub Main
    ReDim DirArr(0)
    nCount = 0
    Do While sFName <> ""
-      If InStr("Bookops.mbk", sFName) = 0 Then
+      If InStr("Bookops.mbk", sFName) = 0 And InStr("newMacros.mbk", SFName) = 0 Then
          ReDim Preserve DirArr(nCount)
          DirArr(nCount) = sFName
          nCount = nCount + 1
