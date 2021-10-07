@@ -60,7 +60,7 @@ Sub Main
       FileCopy sSrcFolder & "onboarding\nypl-only\Profiles\" & "Profile.xml", sConnexFolder & "Profiles\" & "Profile.xml"
       Call MoveFiles(sSrcFolder & "onboarding\nypl-only\Profiles\NYPL\", sConnexFolder & "Profiles\NYPL\")
       
-      MsgBox "NYPL profil created!"
+      MsgBox "NYPL profile created!"
       
    Else
       MsgBox "Nothing to do here :("   
