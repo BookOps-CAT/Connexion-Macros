@@ -66,6 +66,8 @@ Sub Main
    If Dir(sUserProfileFolder & "MyProfile\") <> "" Then
       Call MoveFiles(sUserProfileFolder & "MyProfile\", sBackupLocalFolder & "Profiles\MyProfile\")
    End If
+   
+   MsgBox "All done! User settings have been backed up to: " & sBackupLocalFolder
 
 End Sub
 
