@@ -57,9 +57,9 @@ Sub Main
          ReDim Preserve DirArr(nCount)
          DirArr(nCount) = sFName
          nCount = nCount + 1
-         sFName = Dir
       End If
-   Loop 
+      sFName = Dir
+   Loop
 
    For i = 0 to nCount - 1
       sFName = DirArr(i)
