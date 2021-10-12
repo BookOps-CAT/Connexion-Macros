@@ -22,7 +22,7 @@ Dim sGac() As String, sGeo() As String
 
 Sub Main
 
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    
 
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 17 Then
@@ -2907,7 +2907,7 @@ End Sub
 
 Sub UseGenerate043
    Dim n%, nBool%
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 3 or CS.ItemType = 4 or CS.ItemType = 14 or CS.ItemType = 17 or CS.ItemType = 18 or CS.ItemType = 19 or CS.ItemType = 20 or CS.ItemType = 35 Then
       
       

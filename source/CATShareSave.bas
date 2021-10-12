@@ -20,7 +20,7 @@ Sub Main
    Dim sForm As String
    Dim sErrorList as String
    
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    
    'make sure record is displayed or highlighed in a list 
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 17 Then

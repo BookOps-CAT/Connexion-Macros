@@ -7,7 +7,7 @@
 Sub Main
 
   Dim CS As Object
-  Set CS = CreateObject("Connex.Client")
+  Set CS  = GetObject(,"Connex.Client")
 
   'Set the output Excel file
    If Environ("HOMEPATH") <> 0 Then

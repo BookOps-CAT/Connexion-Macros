@@ -61,7 +61,7 @@ Dim lt$, rt$, sTemp$
 
 Sub Main
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
       Dim s300$, s538$, s948$, sAudn$, sAudnLangPrefix$, sBiog$, sCallType$, sCont$, sCutter$, sElemArr$, _
          sFormatPrefix$, sItemForm$, sLang$, sLitF$, sNameChoice$, sRecType$, sTMat$
@@ -481,7 +481,7 @@ End Sub
 Sub ElemArray(sElemArr, n100, n600)
 'gather elements of the record that may be used in call number   
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim sNameTitle$, sIndicator
    Dim sFields() As String
    Dim n, m As Integer
@@ -639,7 +639,7 @@ End Sub
 Function Dewey(a)
 'creates string with Dewey number taken from 082 field; 4 digits after period for adult materials, 2 digits for juvenile; strips 0s at the end
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim s082$, sLastDigit$
    Dim bool082
    Dim x as Integer
@@ -950,7 +950,7 @@ End Sub
 
 Sub CleanSubjects()
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim sTag$
    Dim nBool
    Dim n As Integer
@@ -995,7 +995,7 @@ End Sub
 
 Sub InsertCallNum(s948, f, sInitials)
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim s901$
    Dim nBool
    

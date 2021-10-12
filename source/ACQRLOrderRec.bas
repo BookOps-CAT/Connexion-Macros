@@ -31,7 +31,7 @@ Option Explicit
 Sub Main
 
    Dim CS As Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
       Dim s949$, s960$, s961$, sForm$, sPrice$, sTodaysDate$, sRDate$, sVendorArr$, sOrderType, sOrderCode3, _
          lt$, rt$, temp$, sType$

@@ -51,7 +51,7 @@ Declare Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType,sItemForm, sLit
 Sub Main
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
       Dim s099$, s130$, s300$, s600$, s650$, s655$, s730$, sCallType$, sAudn$, sLang$, sRecType$, sItemForm$, sFormatPrefix$, sAudiencePrefix$, _
        sLangPrefix$, sCutterArr$, sDewey$, sLitF$, sBiog$, sTMat$, sLTxt$
@@ -334,7 +334,7 @@ End Function
 Function Dewey(sAudn,sCallType)
 'creates string with Dewey number taken from 082 field
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    Dim s082$, sLastDigit$
    Dim x as Integer
    Dim place as Integer
@@ -639,7 +639,8 @@ End Sub
 Sub CutterArray(sCutterArr,sCallType,sDewey)
 'Creates a string used in cuttering based on author/title field
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
+
    Dim sNameTitle$
    Dim i as Integer
       
@@ -731,7 +732,7 @@ End Sub
 Sub Diacritics(sNameTitle)
 'removes diacritic marks and other unwanted characters from a string
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    Dim i as Integer
    
    Indicator = Mid(sNameTitle,5,1)
@@ -833,7 +834,7 @@ End Sub
 
 Sub LocalDewey(s082,sCallType)
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    Dim sClassNum$, sFirstDig$, sFirstTwoDig$, sFirstThreeDig$, sFirstFiveDig$, sFirstSixDig$, sFirstSevenDig$, s3rdTo7thDig$
    Dim s2ndDig$, s3rdDig$, s5thDig$, s6thDig$, s7thDig$, s8thDig$, s9thDig$
    
@@ -1187,7 +1188,7 @@ End Sub
 
 Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType, sItemForm, sLitF, sTMat, sLTxt, f, a)
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    Dim s082$, s338$, s347$, sFields$
    'f - numerical code of format
    'a - numerical code of audience
@@ -1344,7 +1345,7 @@ End Sub
 
 Sub CleanSubjects()
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    Dim sTag$
    Dim nBool
    Dim n As Integer
@@ -1390,7 +1391,7 @@ End Sub
 Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    Dim s949$, sCD, sDVD, sIndcator$, sOverlay$, sLargePrint$, SierraCode$, s007$, s006$
    Dim n as Integer
 

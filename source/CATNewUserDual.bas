@@ -13,7 +13,7 @@ Sub Main
    Dim sUserProfileFolder As String
    Dim sSharedDrive As String
    
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
   
    sConnexFolder = Environ("APPDATA") & "\OCLC\Connex\"
    sUserProfileFolder = sConnexFolder & "Profiles\"

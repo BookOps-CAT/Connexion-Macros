@@ -22,7 +22,7 @@ Declare Sub InsertCallNumber(sField948, sInitials)
 Sub Main
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
       Dim sAudn$, sRecType$, sCutter$, sField948$, sRecNumber$
       Dim sGenre() As String
@@ -183,7 +183,7 @@ End Sub
 Function CutterArray()
    
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim sCutterOpt$, sHeading$
    Dim i As Integer
    Dim sNonLatMessage$
@@ -263,7 +263,7 @@ Sub Diacritics(sHeading)
 'removes diacritic marks and other unwanted characters from a string
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim i as Integer
 
    i = 1
@@ -311,7 +311,7 @@ End Sub
 Sub CutterManipulation(sHeading)
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim sEntryType$
    
    Call Diacritics(sHeading)
@@ -379,7 +379,7 @@ End Sub
 
 Sub CleanSubjects()
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim sTag$
    Dim nBool
    Dim n As Integer
@@ -424,7 +424,7 @@ End Sub
 
 Sub InsertCallNumber(sField948, sInitials)
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim s901$
   
    CS.SetField 1, sField948

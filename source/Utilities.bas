@@ -6,7 +6,7 @@
 Sub Main
 
    Dim CS As Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    
    Begin Dialog UtilDialog 180, 165, "Utilities"
    
