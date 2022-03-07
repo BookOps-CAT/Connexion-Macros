@@ -1,13 +1,16 @@
-'MacroName:NYPL CallNum v.2.7.0
+'MacroName:NYPL CallNum v.2.8.0
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: September 30, 2021
+'Latest update: March 07, 2022
 
-'v2.7.0 update details(09-30-2021):
-' GN FIC call number eliminated and incorporated into FIC
-' BRAILLE format added
+
+'v2.8.0 update details (03-07-2022):
+'  * permits homosaurus terms (homoit)
+'v2.7.0 update details (09-30-2021):
+' * GN FIC call number type eliminated and incorpporated into FIC
+' * BRAILLE format added
 
 'v2.6.1 update details (04-05-2021):
 '  * removal of catalog headings unapproved for use in NYPL catalog (BISACS, SEARS, etc.)
@@ -37,11 +40,11 @@
 '  * added flag for short stories collections
 
 'v2.5.4 update details:
-'  *bug fix: removes false fiction flag for Graphic Novels
-'  *improvement: diacritics function simplified and made more comprehensive
-'  *bug fix: corrected broken format error flags
-'  *rules change: authors name for literary collection changed from $b to $c
-'  *improvement: added validation error flag for Dewey + Name call numbers that are not in 7xx or 8xx range
+'  * bug fix: removes false fiction flag for Graphic Novels
+'  * improvement: diacritics function simplified and made more comprehensive
+'  * bug fix: corrected broken format error flags
+'  * rules change: authors name for literary collection changed from $b to $c
+'  * improvement: added validation error flag for Dewey + Name call numbers that are not in 7xx or 8xx range
 
 
 Option Explicit
@@ -61,7 +64,12 @@ Dim lt$, rt$, sTemp$
 
 Sub Main
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
       Dim s300$, s538$, s948$, sAudn$, sAudnLangPrefix$, sBiog$, sCallType$, sCont$, sCutter$, sElemArr$, _
          sFormatPrefix$, sItemForm$, sLang$, sLitF$, sNameChoice$, sRecType$, sTMat$
@@ -481,7 +489,12 @@ End Sub
 Sub ElemArray(sElemArr, n100, n600)
 'gather elements of the record that may be used in call number   
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    Dim sNameTitle$, sIndicator
    Dim sFields() As String
    Dim n, m As Integer
@@ -639,7 +652,12 @@ End Sub
 Function Dewey(a)
 'creates string with Dewey number taken from 082 field; 4 digits after period for adult materials, 2 digits for juvenile; strips 0s at the end
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    Dim s082$, sLastDigit$
    Dim bool082
    Dim x as Integer
@@ -808,9 +826,9 @@ Sub Diacritics(sNameTitle)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
             i = i - 1
 '        commented out for update v. 2.5.6. - these characters are allowed in cutters for visual materials effective 08/01/2018
-'         Case ".", ":", ";", "/"
-'            sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
-'            i = i - 1
+'        Case ".", ":", ";", "/"
+'           sNameTitle = Mid(sNameTitle, 1, i - 1) & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
+'           i = i - 1
                  
       End Select
       i = i + 1   
@@ -950,7 +968,12 @@ End Sub
 
 Sub CleanSubjects()
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    Dim sTag$
    Dim nBool
    Dim n As Integer
@@ -971,7 +994,8 @@ Sub CleanSubjects()
                Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
                Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
                Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
-               Or InStr(sTag$, Chr(223) & "2 aat") Or InStr(sTag$, Chr(223) & "2 BookOps") Then
+               Or InStr(sTag$, Chr(223) & "2 aat") Or InStr(sTag$, Chr(223) & "2 bookops") _
+               Or InStr(sTag$, Chr(223) & "2 homoit") Then
                   'do nothing, go to the next one
             Else
                'MsgBox sTag$
@@ -995,7 +1019,12 @@ End Sub
 
 Sub InsertCallNum(s948, f, sInitials)
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    Dim s901$
    Dim nBool
    
@@ -1027,3 +1056,5 @@ Sub InsertCallNum(s948, f, sInitials)
    
  CS.EndRecord
 End Sub
+
+
