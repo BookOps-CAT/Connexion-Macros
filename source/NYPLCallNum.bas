@@ -3,11 +3,13 @@
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: March 07, 2022
+'Latest update: March 08, 2022
 
 
 'v2.8.0 update details (03-07-2022):
 '  * permits homosaurus terms (homoit)
+'  * changes call number patterns for Dewey/Dewey+Name > Dewey/Dewey+Author/Dewey+Subject
+'  * removes time table digits from 8xx for single author works
 'v2.7.0 update details (09-30-2021):
 ' * GN FIC call number type eliminated and incorpporated into FIC
 ' * BRAILLE format added
@@ -49,9 +51,10 @@
 
 Option Explicit
 
-Declare Function Dewey(a)
+Declare Function Dewey(a, sCallType)
+Declare Sub LocalDewey(s082, sCallType)
 Declare Sub ElemArray(sElemArr, n100, n600)
-Declare Sub ElemArrayChoice(sCallType, sElemArr, sNameChoice, n100, n600)
+Declare Sub ElemArrayChoice(sElemArr, sNameChoice, n600)
 Declare Sub Diacritics(sNameTitle)
 Declare Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
 Declare Sub InsertCallNum(s948, f, sInitials)
@@ -143,9 +146,9 @@ Sub Main
       Begin Dialog MainWindow 220, 220, "NYPL Call Number Macro"
          
          'top-left outline
-         GroupBox 18, 50, 85, 41, ""
+         GroupBox 18, 50, 87, 41, ""
          'bottom-left outline
-         GroupBox 18, 90, 85, 100, ""
+         GroupBox 18, 90, 87, 100, ""
          'top-right outline
          GroupBox 120, 50, 82, 100, ""
          'bottom-right outline
@@ -155,8 +158,9 @@ Sub Main
          OptionButton  24,  75, 70, 14, "&PICTURE BOOKS"
          OptionButton  24,  95, 70, 14, "&BIOGRAPHY"
          OptionButton  24,  115, 70, 14, "&DEWEY"
-         OptionButton  24,  135, 70, 14, "DEWEY + &NAME"
-         OptionButton  24,  155, 70, 14, "&FICTION"
+         OptionButton  24,  135, 70, 14, "DEWEY+&NAME"
+         OptionButton  24,  155, 75, 14, "DEWE&Y+SUBJECT"
+         OptionButton  24,  175, 70, 14, "&FICTION"
          OptionButton  125,  55, 70, 14, "&MYSTERY"
          OptionButton  125,  75, 70, 14, "&ROMANCE"
          OptionButton  125,  95, 70, 14, "&SCI FI"
@@ -264,38 +268,41 @@ Sub Main
          Case 2
             sCallType = "bio"
             'add selection of name if multiple 600 here then pass variable to rules
-            Call ElemArrayChoice(sCallType, sElemArr, sNameChoice, n100, n600)
+            Call ElemArrayChoice(sElemArr, sNameChoice, n600)
             s948 = s948 & Chr(223) & "a B"
          Case 3
             sCallType = "dew"
-            s948 = s948 & Dewey(a)
+            s948 = s948 & Dewey(a, sCallType)
          Case 4
             sCallType = "den"
-            'add selection of name if 100 and 600 here then pass variable to rules
-            Call ElemArrayChoice(sCallType, sElemArr, sNameChoice, n100, n600)
-            s948 = s948 & Dewey(a)
-         Case 5
+            s948 = s948 & Dewey(a, sCallType)
+        Case 5
+            sCallType = "des"
+            'add selection of name from available 600s here then pass variable to rules
+            Call ElemArrayChoice(sElemArr, sNameChoice, n600)
+            s948 = s948 & Dewey(a, sCallType)
+         Case 6
             sCallType = "fic"
             s948 = s948 & Chr(223) & "a FIC"
-         Case 6
+         Case 7
             sCallType = "mys"
             s948 = s948 & Chr(223) & "a MYSTERY"
-         Case 7
+         Case 8
             sCallType = "rom"
             s948 = s948 & Chr(223) & "a ROMANCE"
-         Case 8
+         Case 9
             sCallType = "sci"
             s948 = s948 & Chr(223) & "a SCI FI"
-         Case 9
+         Case 10
             sCallType = "urb"
             s948 = s948 & Chr(223) & "a URBAN"
-         Case 10
+         Case 11
             sCallType = "wes"
             s948 = s948 & Chr(223) & "a WESTERN"
-         Case 11
+         Case 12
             sCallType = "mov"
             s948 = s948 & Chr(223) & "a MOVIE"
-         Case 12
+         Case 13
             sCallType = "tvs"
             s948 = s948 & Chr(223) & "a TV"
       End Select
@@ -377,18 +384,18 @@ Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
    End If
    
    'determine rule to apply
-   If InStr("eas,pic,fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+   If InStr("eas,den,pic,fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
       Goto Rule1
    ElseIf sCallType = "dew" Then
       Goto Rule2
-   ElseIf sCallType = "bio" Or sCallType = "den" Then
+   ElseIf sCallType = "bio" Or sCallType = "des" Then
       Goto Rule3
    ElseIf sCallType = "mov" Or sCallType = "tvs" Then
       Goto Rule5
    End If
   
 Rule1:
-   'fic, eas, pic, urb, sci, wes, rom, mys: last name of author, first word of 110 or first letter of 245
+   'eas, den, fic, mys, pic, rom, urb, sci, wes: last name of author, first word of 110 or first letter of 245
    If Left(sMainEntry, 3) = "100" Then
       sMainEntry = Mid(sMainEntry, 6)
       Do While InStr(sMainEntry, ",")
@@ -396,6 +403,9 @@ Rule1:
          sMainEntry = RTrim(Left(sMainEntry, place - 1))
       Loop
       sCutter = Left(sMainEntry, 30)
+   ElseIf Left(sMainEntry, 3) <> "100" AND sCallType = "den" Then
+      sCutter = Chr(252)
+      MsgBox "Invalid call number choice. Dewey+Author must have 100 field."
    ElseIf Left(sMainEntry, 3) = "110" Then
       sMainEntry = Mid(sMainEntry, 6)
       Do While InStr(sMainEntry, " ")
@@ -407,6 +417,7 @@ Rule1:
    ElseIf Left(sMainEntry, 3) = "245" Then
       sCutter = Mid(sMainEntry, 6, 1)
    End If
+
    sCutter = " " & Chr(223) & "c " & sCutter
    Goto Done
 
@@ -418,7 +429,7 @@ Rule2:
 
 Rule3:
    'bio: last name for biographee & first letter of main entry
-   'den: last name in subfield $b
+   'des: dewey + last name in subfield b + first letter of main entry
    
    sMainEntry = Mid(sMainEntry, 6, 1)
   
@@ -429,23 +440,10 @@ Rule3:
          sNameChoice = RTrim(Left(sNameChoice, place - 1))
       Loop
       sNameChoice = Left(sNameChoice, 30)
-
-      'call number type applied based on catalogers selection of element for cuttering 100 vs 600
-      If Left(sNameChoice, 3) = "100" Then
-         sNameChoice = Mid(sNameChoice, 6)
-         sCutter = " " & Chr(223) & "c " & sNameChoice
-      ElseIf Left(sNameChoice, 3) = "600" Then
-         sNameChoice = Mid(sNameChoice, 6)
-         sCutter = " " & Chr(223) & "b " & sNameChoice & " " & Chr(223) & "c " & sMainEntry
-      End If
-   Else
-      'empty element scenarios (have fill character)
-      If sCallType = "bio" Then
-         sCutter = " " & Chr(223) & "b " & sNameChoice & " " & Chr(223) & "c " & sMainEntry
-      Else
-         sCutter = " " & Chr(223) & "c " & sNameChoice
-      End If
+      sNameChoice = Mid(sNameChoice, 6)
    End If
+  
+   sCutter = " " & Chr(223) & "b " & sNameChoice & " " & Chr(223) & "c " & sMainEntry
    Goto Done
 
 Rule4:
@@ -544,103 +542,71 @@ End Sub
 
 '########################################################################
 
-Sub ElemArrayChoice(sCallType, sElemArr, sNameChoice, n100, n600)
+Sub ElemArrayChoice(sElemArr, sNameChoice, n600)
 
    Dim n, x As Integer
    Dim start_point, end_point As Integer
    Dim sTemp$, sTemp2, sNameArr$
    Dim z As Integer
    
-   If n100 = 0 And n600 = 0 Then
+   If n600 = 0 Then
       Goto NoData
-   ElseIf n100 = 1 And n600 = 0 Then
-      If sCallType = "den" Then
-         start_point = InStr(sElemArr, "100: ")
-         sTemp = Mid(sElemArr, start_point)
+   ElseIf n600 = 1 Then
+      'only one 600 field, simply create element
+      start_point = InStr(sElemArr, "600: ")
+      sTemp = Mid(sElemArr, start_point)
+      end_point = InStr(sTemp, Chr(9))
+      sNameChoice = Left(sTemp, end_point - 1)
+      Goto Done     
+   ElseIf n600 >= 1 Then
+      'multiple 600 fields, allow cataloger to select
+      sTemp = sElemArr
+      Do While InStr(sTemp, "600") 
+         start_point = InStr(sTemp, "600")
+         sTemp = Mid(sTemp, start_point)
          end_point = InStr(sTemp, Chr(9))
-         sNameChoice = Left(sTemp, end_point - 1)
-         Goto Done
-      ElseIf sCallType = "bio" Then
-         Goto NoData
-      End If
-   ElseIf n100 >= 0 And n600 >= 1 Then
-      If sCallType = "bio" Then
-         If n600 = 1 Then
-            start_point = InStr(sElemArr, "600: ")
-            sTemp = Mid(sElemArr, start_point)
-            end_point = InStr(sTemp, Chr(9))
-            sNameChoice = Left(sTemp, end_point - 1)
-            Goto Done
-         Else
-            sTemp = sElemArr
-            Do While InStr(sTemp, "600") 
-               start_point = InStr(sTemp, "600")
-               sTemp = Mid(sTemp, start_point)
-               end_point = InStr(sTemp, Chr(9))
-               sTemp2 = Left(sTemp, end_point)
-               sNameArr = sNameArr & sTemp2
-               sTemp = Mid(sTemp, end_point + 1)
-            Loop
-         End If
-      ElseIf sCallType = "den" Then
-         If n100 = 0 And n600 = 1 Then
-            start_point = InStr(sElemArr, "600: ")
-            sTemp = Mid(sElemArr, start_point)
-            end_point = InStr(sTemp, Chr(9))
-            sNameChoice = Left(sTemp, end_point - 1)
-            Goto Done
-         Else
-            sTemp = sElemArr
-            If InStr(sTemp, "100: ") Then
-               start_point = InStr(sTemp, "100: ")
-               sTemp = Mid(sTemp, start_point)
-               end_point = InStr(sTemp, Chr(9))
-               sNameArr = Left(sTemp, end_point)
-            End If
-            sTemp = sElemArr
-            Do While InStr(sTemp, "600") 
-               start_point = InStr(sTemp, "600")
-               sTemp = Mid(sTemp, start_point)
-               end_point = InStr(sTemp, Chr(9))
-               sTemp2 = Left(sTemp, end_point)
-               sNameArr = sNameArr & sTemp2
-               sTemp = Mid(sTemp, end_point + 1)
-            Loop
-         End If
-      End If
-      'dialog box for selection of the name
-      Begin Dialog UserDialog 200, 60, "Select Element"
-      DropListBox  8, 15, 100, 250, sNameArr, .sNameArr
-      OkButton        130, 15,  54, 16
-      CancelButton   130, 35,  54, 16
-      End Dialog
-      Dim dElement as UserDialog
-      On Error Resume Next
-      'Dialog dElement
-      z = Dialog(dElement)
-      If z = 0 Then
-         'MsgBox "closing"
-      End If
-      If Err = 102 Then
-         sNameArr = ""
-         Exit Sub
-      End If
-      n = dElement.sNameArr + 1
-      sTemp = sNameArr
-      x = 0
-      Do
-         place = InStr(sTemp, Chr(9))
-         If place <> 0 Then
-            lt$ = Left(sTemp, place - 1)
-            sTemp = Mid(sTemp, place + 1)
-         Else
-            lt$ = sTemp
-         End If
-         x = x + 1
-      Loop Until x >= n
-      sNameChoice = lt$
+         sTemp2 = Left(sTemp, end_point)
+         sNameArr = sNameArr & sTemp2
+         sTemp = Mid(sTemp, end_point + 1)
+      Loop
    End If
+   
+   'dialog box for selection of the name
+   Begin Dialog UserDialog 200, 60, "Select Element"
+   DropListBox  8, 15, 100, 250, sNameArr, .sNameArr
+   OkButton        130, 15,  54, 16
+   CancelButton   130, 35,  54, 16
+   End Dialog
+   
+   Dim dElement as UserDialog
+   On Error Resume Next
+   'Dialog dElement
+   z = Dialog(dElement)
+   If z = 0 Then
+      'MsgBox "closing"
+   End If
+   If Err = 102 Then
+      sNameArr = ""
+      Exit Sub
+   End If
+   
+   n = dElement.sNameArr + 1
+   sTemp = sNameArr
+   x = 0
+   Do
+      place = InStr(sTemp, Chr(9))
+      If place <> 0 Then
+         lt$ = Left(sTemp, place - 1)
+         sTemp = Mid(sTemp, place + 1)
+      Else
+         lt$ = sTemp
+      End If
+      x = x + 1
+      Loop Until x >= n
+      
+   sNameChoice = lt$
    Goto Done
+ 
 NoData:
    MsgBox "MISSING INFO: No valid MARC field for this type of call number. Please check your record."
    sNameChoice = Chr(252)
@@ -649,7 +615,7 @@ End Sub
 
 '########################################################################
 
-Function Dewey(a)
+Function Dewey(a, sCallType)
 'creates string with Dewey number taken from 082 field; 4 digits after period for adult materials, 2 digits for juvenile; strips 0s at the end
    Dim CS as Object
    On Error Resume Next
@@ -718,6 +684,9 @@ Function Dewey(a)
             s082 = Left(s082, 8)
          End If
    End If
+   
+   Call LocalDewey(s082, sCallType)
+ 
    'removes 0 if it's the last digit and loop 
    Do
       x = Len(s082)
@@ -735,6 +704,279 @@ Function Dewey(a)
    End If
 Done:
 End Function
+
+
+'########################################################################
+
+Sub LocalDewey(s082, sCallType)
+   Dim s1stDig$, s2ndDig$, s3rdDig$, s5thDig$, s6thDig$, s7thDig$, s8thDig$, s9thDig$
+   Dim s1stThreeDig$, s1stFiveDig$, s1stSixDig$, s3rdTo7thDig$
+   Dim sLitTimeTableMsg$
+   
+   If sCallType = "dew" Then
+      Goto Done
+   End If
+   
+   s1stDig = Left(s082, 1)
+   s2ndDig = Mid(s082, 2, 1)
+   s3rdDig = Mid(s082, 3, 1)
+   s5thDig = Mid(s082, 5, 1)
+   s6thDig = Mid(s082, 6, 1)
+   s7thDig = Mid(s082, 7, 1)
+   s8thDig = Mid(s082, 8, 1)
+   s9thDig = Mid(s082, 9, 1)
+   
+   s1stThreeDig = Left(s082, 3)
+   s1stFiveDig = Left(s082, 5)
+   s1stSixDig = Left(s082, 6)
+   s3rdTo7thDig = Mid(082, 3, 5)
+   
+   sLitTimeTableMsg = "INFO: NYPL does not use time tables in literature for works by our about single author. Removing time table digits..."
+   
+
+   'removes time periods from American English, English, Spanish, German, French & Italian literature call number
+   If s1stDig = "8" And InStr("123456", s2ndDig) <> 0 Then
+      If InStr("12345678", s3rdDig) <> 0 And InStr("123456789", s5thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 4)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 3)
+         End If
+      End If
+      If s3rdTo7thDig = "0.800" Or s3rdTo7thDig = "0.900" Then
+         MsgBox sLitTimeTableMsg
+         s082 = Left(s082,5)
+      End If
+   End If
+   'removes time periods from Slavic literatures call numbers
+   If s1stFiveDig = "891.8" And InStr("123456789", s6thDig) <> 0 Then
+      If InStr("12345678", s7thDig) <> 0 And InStr("123456789", s8thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 7)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 7)
+         End If
+      End If
+   End If
+   'removes time periods from Finnic literatures call numbers
+   If s1stSixDig = "894.54" And InStr("15", s7thDig) <> 0 Then
+      If InStr("12345678", s8thDig) <> 0 And InStr("1234", s9thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 8)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 8)
+         End If
+      End If
+   End If
+   'removes time periods from Russian literature call numbers
+   If s1stFiveDig = "891.7" And InStr("12345678", s6thDig) <> 0 Then
+      If InStr("12345", s7thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 6)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 6)
+         End If
+      End If
+   End If
+  'removes time periods from Ukrainian literatures call numbers
+   If s1stSixDig = "891.79" And InStr("12345678", s7thDig) <> 0 Then
+      If InStr("12345", s8thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 7)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 7)
+         End If
+      End If
+   End If
+   'removes time periods from Japanese literature call numbers
+   If s1stFiveDig = "895.6" And InStr("12345678", s6thDig) <> 0 Then
+      If InStr("123456", s7thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 6)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 6)
+         End If
+      End If
+   End If
+   'removes time periods from Chinese literature call numbers
+   If s1stFiveDig = "895.1" And InStr("12345678", s6thDig) <> 0 Then
+      If InStr("123456", s7thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 6)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + "0" + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 6)
+         End If
+      End If
+   End If
+   'removes time periods from other Germanic literatures call numbers (includes Yiddish, Swedish, Old Norse, Icelandic)
+   If s1stThreeDig = "839" And InStr("124567", s5thDig) <> 0 Then
+      If InStr("12345678", s6thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 6)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 6)
+         End If
+      End If
+   End If
+   'removes time periods from Portuguese literature
+   If s1stThreeDig = "869" And InStr("12345678", s5thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 5)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 5)
+         End If
+   End If
+   'removes time periods from Danish, Norwegian literatures call numbers 
+   If s1stFiveDig = "839.8" And InStr("12", s6thDig) <> 0 Then
+      If InStr("12345678", s7thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 7)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 7)
+         End If
+      End If
+   End If
+   'removes time periods from Arabic literatures call numbers 
+   If s1stFiveDig = "892.7" And InStr("12345678", s6thDig) <> 0 And InStr("1234567", s7thDig) <> 0 Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 6)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 6)
+         End If
+   End If
+   'removes time periods from Classic Greek and Latin
+   If s1stDig = "8" And InStr("78", s2ndDig) <> 0 Then
+      If InStr("12345678", s3rdDig) <> 0 And s5thDig = "0" And InStr("1234", s6thDig) <> 0  Then
+         If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+            If InStr(s082,"08") <> 0 Then
+               place = InStr(s082, "08")
+            End If
+            If InStr(s082, "09") <> 0 Then
+               place = InStr(s082, "09")
+            End If
+            MsgBox sLitTimeTableMsg
+            lt$ = Left(s082, 4)
+            rt$ = Mid(s082, place)
+            s082 = lt$ + rt$
+         Else
+            MsgBox sLitTimeTableMsg
+            s082 = Left(s082, 3)
+         End If
+      End If
+   End If
+
+Done:
+End Sub
 
 '########################################################################
 
