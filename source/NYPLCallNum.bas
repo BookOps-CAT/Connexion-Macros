@@ -3,13 +3,14 @@
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: March 08, 2022
+'Latest update: March 09, 2022
 
 
 'v2.8.0 update details (03-07-2022):
 '  * permits homosaurus terms (homoit)
 '  * changes call number patterns for Dewey/Dewey+Name > Dewey/Dewey+Author/Dewey+Subject
 '  * removes time table digits from 8xx for single author works
+'  * adds Modern Persian (Farsi) literature time table digits removal
 'v2.7.0 update details (09-30-2021):
 ' * GN FIC call number type eliminated and incorpporated into FIC
 ' * BRAILLE format added
@@ -972,6 +973,24 @@ Sub LocalDewey(s082, sCallType)
             MsgBox sLitTimeTableMsg
             s082 = Left(s082, 3)
          End If
+      End If
+   End If
+   ' removes time period digits from Modern Persian (Farsi) literature
+   If s1stSixDig = "891.55" And InStr("12345678", s7thDig) <> 0 Then
+      If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+         If InStr(s082,"08") <> 0 Then
+            place = InStr(s082, "08")
+         End If
+         If InStr(s082, "09") <> 0 Then
+            place = InStr(s082, "09")
+         End If
+         MsgBox sLitTimeTableMsg
+         lt$ = Left(s082, 7)
+         rt$ = Mid(s082, place)
+         s082 = lt$ + rt$
+      Else
+         MsgBox sLitTimeTableMsg
+         s082 = Left(s082, 7)
       End If
    End If
 
