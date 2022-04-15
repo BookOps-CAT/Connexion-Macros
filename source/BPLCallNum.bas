@@ -7,8 +7,12 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: Marc 09, 2022 (v. 2.7)
+'Last updated: April 15, 2022 (v. 2.8)
 
+
+'v2.8 (04-15-2022) changes:
+'  * removes AAT thesaurus as acceptable for bibs produced in BookOps/CAT (OCLC began assigning them automatically and they proliferated in records recently)
+'  * adds homosaurus thesaurus (homoit)
 'v2.7 (03-09-2022) changes:
 '  * introduces Dewey+Name for literary works by a single author in a particular form (811 POE - collection of Edgar Poe poems)
 '  * adds Modern Persian literature time table digits removal
@@ -181,7 +185,7 @@ Sub Main
                dCallNum.Type = 1
             End If
 
-         ElseIf InStr("dehimps", sLifF) <> 0 And s100 <> "" And sBiog <> "a" And sBiog <> "b" Then
+         ElseIf InStr("dehimps", sLitF) <> 0 And s100 <> "" And sBiog <> "a" And sBiog <> "b" Then
             ' dewey + name
             dCallNum.Type = 3
 
@@ -1420,19 +1424,36 @@ Sub CleanSubjects()
    'remove subject from unsupported thesauri
   
    n = 6
-   nBool = CS.GetFieldLine(n,stag$)
+   nBool = CS.GetFieldLine(n,sTag$)
    Do While nBool = TRUE
       If Left(sTag$, 1) = "6" Then
          If InStr("653,654", Mid(sTag$, 1, 3)) <> 0 Then
             DelArr(n) = n
             'MsgBox sTag$
          ElseIf InStr("600,610,611,630,650,651,655", Mid(sTag$, 1, 3)) <> 0 Then
-            If Mid(sTag$,5,1) = "0" Or Mid(sTag$,5,1) = "1" Or InStr(sTag$, Chr(223) & "2 gsafd") _
-               Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
-               Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
-               Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
-               Or InStr(sTag$, Chr(223) & "2 aat") Or InStr(sTag$, Chr(223) & "2 BookOps") Then
-                  'do nothing, go to the next one
+            'LCSH & Children's SH
+            If Mid(sTag$,5,1) = "0" Or Mid(sTag$,5,1) = "1" Then
+               If InStr(sTag$, Chr(223) & "v Popular works") <> 0 Then
+                  MsgBox "trigger"
+                  place = InStr(sTag$, Chr(223) & "v Popular works")
+                  lt$ = Left(sTag$, place - 2)
+                  rt$ = Mid(sTag$, place + 16)
+                  sTag$ = lt$ + rt$
+                  CS.DeleteFieldLine n
+                  CS.AddFieldLine n, sTag$
+               End If
+            ' other dictionaries
+            ElseIf Mid(sTag$,5,1) = "7" Then
+               If InStr(sTag$, Chr(223) & "2 gsafd") _
+                  Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
+                  Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
+                  Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
+                  Or InStr(sTag$, Chr(223) & "2 homoit") Or InStr(sTag$, Chr(223) & "2 bookops") Then
+                     'do nothing, go to the next one
+               Else
+                  'MsgBox sTag$
+                  DelArr(n) = n
+               End If
             Else
                'MsgBox sTag$
                DelArr(n) = n
@@ -1601,39 +1622,7 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
          bool = CS.SetField(1, s006)
       End If
    End If
-
-   'stripping unwanted MARC fields from the record
-   n = 6
-   nBool = CS.GetFieldLine(n,subhead$)
-   Do While nBool = TRUE
-      If InStr("653", Mid(subhead$, 1, 3)) <> 0 Then
-         CS.DeleteFieldLine n
-      End If      
-      If InStr("600,610,611,630,650,651,655", Mid(subhead$, 1, 3)) <> 0 Then
-         If Mid(subhead$,5,1) = "0" Or Mid(subhead$,5,1) = "1" Or InStr(subhead$, Chr(223) & "2 gsafd") _
-          Or InStr(subhead$, Chr(223) & "2 fast") Or InStr(subhead$, Chr(223) & "2 lcsh") _
-          Or InStr(subhead$, Chr(223) & "2 bidex") Or InStr(subhead$, Chr(223) & "2 lcgft") _
-          Or InStr(subhead$, Chr(223) & "2 gmgpc") Or InStr(subhead$, Chr(223) & "2 lctgm") _
-          Or InStr(subhead$, Chr(223) & "2 aat") Then
-            If InStr(subhead$, Chr(223) & "v Popular works") <> 0 Then
-               place = InStr(subhead$, Chr(223) & "v Popular works")
-               lt$ = Left(subhead$, place - 2)
-               rt$ = Mid(subhead$, place + 16)
-               subhead$ = lt$ + rt$
-               CS.DeleteFieldLine n
-               CS.AddFieldLine n, subhead$
-            End If
-            n = n + 1
-         Else
-            'remove apostrophe in the beginning of the line below to display deleted subject headings
-            'MsgBox subhead$
-            CS.DeleteFieldLine n
-         End If
-      Else
-         n = n + 1 
-      End If
-      nBool = CS.GetFieldLine(n,subhead$) 
-   Loop
+   
    If sItemForm <> "o" Then
       n = 1
       nBool = CS.GetField("020", n, isbn$)

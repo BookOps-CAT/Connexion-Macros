@@ -3,9 +3,11 @@
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: March 09, 2022
+'Latest update: April 15, 2022
 
 
+'v2.9.0 update datails (04-15-2022):
+'  * removes aat thesaurus from terms permitted on BL
 'v2.8.0 update details (03-07-2022):
 '  * permits homosaurus terms (homoit)
 '  * changes call number patterns for Dewey/Dewey+Name > Dewey/Dewey+Author/Dewey+Subject
@@ -1255,8 +1257,7 @@ Sub CleanSubjects()
                Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
                Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
                Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
-               Or InStr(sTag$, Chr(223) & "2 aat") Or InStr(sTag$, Chr(223) & "2 bookops") _
-               Or InStr(sTag$, Chr(223) & "2 homoit") Then
+               Or InStr(sTag$, Chr(223) & "2 bookops") Or InStr(sTag$, Chr(223) & "2 homoit") Then
                   'do nothing, go to the next one
             Else
                'MsgBox sTag$
