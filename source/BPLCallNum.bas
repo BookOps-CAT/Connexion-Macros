@@ -7,9 +7,13 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: April 15, 2022 (v. 2.8)
+'Last updated: May 6, 2022
 
 
+'v3.0.0 (05-06-2022) changes:
+'  * removes the routine that deletes unsupported subject vocabularies from 6xx fields (moved to CAT!UpdateExport macro)
+'  * ceases removal of "Popular works" subdivision from LCSH
+'  * introduces semantic versioning (major, minor, patch)
 'v2.8 (04-15-2022) changes:
 '  * removes AAT thesaurus as acceptable for bibs produced in BookOps/CAT (OCLC began assigning them automatically and they proliferated in records recently)
 '  * adds homosaurus thesaurus (homoit)
@@ -45,7 +49,6 @@
 Declare Function Dewey(sAudn,sCallType)
 Declare Function FileDlgFunction(identifier$, action, suppvalue)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
-Declare Sub CleanSubjects()
 Declare Sub CutterArray(sCutterArr,sCallType,sDewey)
 Declare Sub SubjectChoice(sSubjectArr)
 Declare Sub Diacritics(sNameTitle)
@@ -339,9 +342,6 @@ CaseType:
          Open sFileName for Output As filenumber
          Print #filenumber, sInitials
          Close #filenumber
-         
-         'clean subject fields
-         Call CleanSubjects()
          
          'insert call number
          s099 = s099 & sCutter
@@ -1410,69 +1410,6 @@ CutterCheck:
 End Sub
 
 '########################################################################
-
-Sub CleanSubjects()
-   Dim CS as Object
-   Set CS  = GetObject(,"Connex.Client")
-
-   Dim sTag$
-   Dim nBool
-   Dim n As Integer
-   Dim DelArr(6 to 99) As Integer
-   
-   'strip unwanted MARC tags:
-   'remove subject from unsupported thesauri
-  
-   n = 6
-   nBool = CS.GetFieldLine(n,sTag$)
-   Do While nBool = TRUE
-      If Left(sTag$, 1) = "6" Then
-         If InStr("653,654", Mid(sTag$, 1, 3)) <> 0 Then
-            DelArr(n) = n
-            'MsgBox sTag$
-         ElseIf InStr("600,610,611,630,650,651,655", Mid(sTag$, 1, 3)) <> 0 Then
-            'LCSH & Children's SH
-            If Mid(sTag$,5,1) = "0" Or Mid(sTag$,5,1) = "1" Then
-               If InStr(sTag$, Chr(223) & "v Popular works") <> 0 Then
-                  MsgBox "trigger"
-                  place = InStr(sTag$, Chr(223) & "v Popular works")
-                  lt$ = Left(sTag$, place - 2)
-                  rt$ = Mid(sTag$, place + 16)
-                  sTag$ = lt$ + rt$
-                  CS.DeleteFieldLine n
-                  CS.AddFieldLine n, sTag$
-               End If
-            ' other dictionaries
-            ElseIf Mid(sTag$,5,1) = "7" Then
-               If InStr(sTag$, Chr(223) & "2 gsafd") _
-                  Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
-                  Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
-                  Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
-                  Or InStr(sTag$, Chr(223) & "2 homoit") Or InStr(sTag$, Chr(223) & "2 bookops") Then
-                     'do nothing, go to the next one
-               Else
-                  'MsgBox sTag$
-                  DelArr(n) = n
-               End If
-            Else
-               'MsgBox sTag$
-               DelArr(n) = n
-            End If
-         End If
-      End If
-      n = n + 1
-      nBool = CS.GetFieldLine(n,sTag$)
-   Loop
-   
-   For n = 99 to 6 Step -1
-      If DelArr(n) <> 0 Then
-         CS.DeleteFieldLine n
-      End If
-   Next
-
-End Sub
-
-'##################################################
 
 Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
 

@@ -3,9 +3,10 @@
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: April 15, 2022
+'Latest update: May 6, 2022
 
-
+'v3.0.0 (05-06-2022):
+'  * removes a routine that deletes unsupported subject vocabularies from 6xx fields (moved to CAT!UpdateExport macro)
 'v2.9.0 update datails (04-15-2022):
 '  * removes aat thesaurus from terms permitted on BL
 'v2.8.0 update details (03-07-2022):
@@ -62,7 +63,6 @@ Declare Sub Diacritics(sNameTitle)
 Declare Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
 Declare Sub InsertCallNum(s948, f, sInitials)
 Declare Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s948)
-Declare Sub CleanSubjects()
 
 'temporary variables
 Dim place, i as Integer
@@ -341,8 +341,6 @@ Sub Main
          'insert call number & other strings
          Call InsertCallNum(s948, f, sInitials)
          
-         'clean up subjects
-         Call CleanSubjects()
       End If
       
    Else
@@ -1227,55 +1225,6 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
 
 End Sub
 
-'########################################################################
-
-Sub CleanSubjects()
-   Dim CS as Object
-   On Error Resume Next
-   Set CS  = GetObject(,"Connex.Client")
-   On Error GoTo 0
-   If CS  Is Nothing Then
-      Set CS  = CreateObject("Connex.Client")
-   End If
-   Dim sTag$
-   Dim nBool
-   Dim n As Integer
-   Dim DelArr(6 to 99) As Integer
-   
-   'strip unwanted MARC tags:
-   'remove subject from unsupported thesauri
-  
-   n = 6
-   nBool = CS.GetFieldLine(n,stag$)
-   Do While nBool = TRUE
-      If Left(sTag$, 1) = "6" Then
-         If InStr("653,654", Mid(sTag$, 1, 3)) <> 0 Then
-            DelArr(n) = n
-            'MsgBox sTag$
-         ElseIf InStr("600,610,611,630,650,651,655", Mid(sTag$, 1, 3)) <> 0 Then
-            If Mid(sTag$,5,1) = "0" Or Mid(sTag$,5,1) = "1" Or InStr(sTag$, Chr(223) & "2 gsafd") _
-               Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
-               Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
-               Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
-               Or InStr(sTag$, Chr(223) & "2 bookops") Or InStr(sTag$, Chr(223) & "2 homoit") Then
-                  'do nothing, go to the next one
-            Else
-               'MsgBox sTag$
-               DelArr(n) = n
-            End If
-         End If
-      End If
-      n = n + 1
-      nBool = CS.GetFieldLine(n,sTag$)
-   Loop
-   
-   For n = 99 to 6 Step -1
-      If DelArr(n) <> 0 Then
-         CS.DeleteFieldLine n
-      End If
-   Next
-
-End Sub
 
 '########################################################################
 
@@ -1318,5 +1267,3 @@ Sub InsertCallNum(s948, f, sInitials)
    
  CS.EndRecord
 End Sub
-
-
