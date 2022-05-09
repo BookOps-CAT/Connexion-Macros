@@ -3,7 +3,7 @@ A repository of the BookOps cataloging department Macros for OCLC Connexion clie
 
 ## Installation
 ### Easy Way
-To install, copy the macro book (.mbk file in /macrobooks folder) to the "C:\Users\[user-name]\AppData\Roaming\OCLC\Connex\Macros" directory.
+To install, copy the macro book (.mbk file in /macrobooks folder) to the "C:/Users/[your-username]/AppData/Roaming/OCLC/Connex/Macros/" directory.
 
 Simple as that!
 ### Hard Way (Copy and Paste from Source)
@@ -40,7 +40,7 @@ Done!
     * [CATUserDual.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATNewUserDual.bas)
     * [CATUserNYP.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATNewUserNYP.bas)
 5. ACQ.mbk macrobook
-	* [ACQRLOrderRec.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/ACQRLOrderRec.bas)
+	* [RLOrderRec.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/ACQRLOrderRec.bas)
 6. NewMacros.mbk macrobook
 	* [updater.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/newMacrosUpdater.bas)
 ## License
