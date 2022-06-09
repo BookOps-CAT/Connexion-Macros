@@ -1,0 +1,89 @@
+'MacroName:BPLLCCN
+'MacroDescription:LC Call version for BPL
+   
+   'LC Call number
+'Created by Miriam Gloger 
+'Copy Call number from 050 to 099 Call number for Brooklyn Public Library CBH
+
+Option Explicit
+
+Sub Main
+   Dim CS as Object
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
+  
+   
+  Dim sLccall as String
+  Dim sCall as String 
+  Dim sCutter as String 
+  Dim nPlace1 as Integer
+  Dim nPlace2 as Integer
+  Dim sData as String
+  Dim nBool as Integer
+  Dim z as Integer
+
+  Dim filenumber As Integer
+  Dim sFileName As String
+  Dim sDefaultInitials$
+  Dim sInitials$
+
+
+      'read default data (initials) from text file stored in macro folder
+      sFileName = Mid(Environ(2), 9) + "\OCLC\Connex\Profiles\cat_data.txt"
+
+      If Dir$ (sFileName) <> "" Then
+         filenumber = FreeFile
+         Open sFileName for Input As filenumber
+         Line Input #filenumber, sDefaultInitials
+         Close #filenumber
+      Else
+         'create a file with blank values if not present in the main folder
+         filenumber = FreeFile
+         Open sFileName For Output As filenumber
+         Print #filenumber, "XXX"
+         Close #filenumber
+         sDefaultInitials = "XXX"
+      End If
+
+
+       filenumber = FreeFile
+       Open sFileName For Output As filenumber
+       Print #filenumber, sInitials
+       Close #filenumber
+
+       sInitials = sDefaultInitials
+       
+
+   If CS.ItemType = 0 Or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 or CS.ItemType = 19 or CS.ItemType = 26 or CS.ItemType = 31 or CS.ItemType = 33 or CS.ItemType = 35 Then
+         
+   nBool = CS.GetField("050",1, sLccall)
+   If nBool = True Then
+     
+      sLccall = Mid(sLccall, 6)
+      nPlace1 = InStr(sLccall, Chr(223))
+      sCall = Rtrim(Left(sLccall, nPlace1-1))
+      nPlace2=InStr(sLccall, Chr(223) & "b")
+      sCutter=Ltrim(Mid(sLccall, nPlace2+2))
+
+      CS.SetField 1, "099  " & "ßa " & sCall & "ßa" & sCutter
+
+      CS.Reformat     
+
+      CS.SetField 1, "947  " & sInitials
+      CS.SetField 1, "949  *recs=cbh;ov=." 
+
+
+               
+     End If
+     CS.Reformat
+     MsgBox "Please verify the Library of Congress Classification"
+     End if
+ 
+
+
+        
+End Sub
