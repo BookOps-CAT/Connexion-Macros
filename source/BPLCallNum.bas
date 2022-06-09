@@ -7,19 +7,47 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: September 28, 2018 (v. 2.0)
-'v.1.7 changes:
-'  *improved and simplified diactriticts function
-'v.1.8 changes:
-'  * DVD call number cutter includes full first word of title
-'  * bug fix: underscore nonspacing character (Chr(246)) handling fixed
-'v.1.9 changes:
+'Last updated: May 6, 2022
+
+
+'v3.0.0 (05-06-2022) changes:
+'  * removes the routine that deletes unsupported subject vocabularies from 6xx fields (moved to CAT!UpdateExport macro)
+'  * ceases removal of "Popular works" subdivision from LCSH
+'  * introduces semantic versioning (major, minor, patch)
+'v2.8 (04-15-2022) changes:
+'  * removes AAT thesaurus as acceptable for bibs produced in BookOps/CAT (OCLC began assigning them automatically and they proliferated in records recently)
+'  * adds homosaurus thesaurus (homoit)
+'v2.7 (03-09-2022) changes:
+'  * introduces Dewey+Name for literary works by a single author in a particular form (811 POE - collection of Edgar Poe poems)
+'  * adds Modern Persian literature time table digits removal
+'v2.6 changes:
+'  * removal of the S52 segment from call numbers for Shakespeare
+'v2.5 changes:
+'  * refactoring of removal of unwanted subject headings
+'v2.4 changes:
+'  * title entry J-E have cutter consisting of the first letter of the title, switch from Rule 1 to Rule 2 (same as fiction)
+'  * cuttering of titles with corporate main entry (110 tag) changed to full first word
+'v2.3 changes:
+'  * file with cataloger initials stored now in OCLC's profile directory
+'v2.2 changes:
+'  * autobiography cutter changes: main entry used for the cutter instead of the title entry
+'v2.1 changes:
+'  * bug fix: corrected removal of time table numbers from Russian literature
+'v2.0 changes:
+'  * feature DVD call number includes one of two type prefixes: TV and MOVIE
+'v1.9 changes:
 '  * Readalong format support
 '  * Chinese lit time table handling added
-'v.2.0 changes:
-'  * feature DVD call number includes one of two type prefixes: TV and MOVIE
+'v1.8 changes:
+'  * DVD call number cutter includes full first word of title
+'  * bug fix: underscore nonspacing character (Chr(246)) handling fixed
+'v1.7 changes:
+'  *improved and simplified diactriticts function
+
+
 
 Declare Function Dewey(sAudn,sCallType)
+Declare Function FileDlgFunction(identifier$, action, suppvalue)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
 Declare Sub CutterArray(sCutterArr,sCallType,sDewey)
 Declare Sub SubjectChoice(sSubjectArr)
@@ -33,9 +61,10 @@ Declare Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType,sItemForm, sLit
 Sub Main
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
+
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
-      Dim s099$, s130$, s300$, s600$, s650$, s655$, s730$, sCallType$, sAudn$, sLang$, sRecType$, sItemForm$, sFormatPrefix$, sAudiencePrefix$, _
+      Dim s099$, s100$, s130$, s300$, s600$, s650$, s655$, s730$, sCallType$, sAudn$, sLang$, sRecType$, sItemForm$, sFormatPrefix$, sAudiencePrefix$, _
        sLangPrefix$, sCutterArr$, sDewey$, sLitF$, sBiog$, sTMat$, sLTxt$
       Dim iAudn As Integer
       Dim sFormat() As String
@@ -49,7 +78,7 @@ Sub Main
       Dim sInitials$
       
       'read default data (initials) from text file stored in macro folder
-      sFileName = "cat_data.txt"
+      sFileName = Mid(Environ(2), 9) + "\OCLC\Connex\Profiles\cat_data.txt"
       If Dir$ (sFileName) <> "" Then
          filenumber = FreeFile
          Open sFileName for Input As filenumber
@@ -68,6 +97,7 @@ Sub Main
       CS.GetFixedField "Form", sItemForm
       CS.GetFixedField "Audn", sAudn
       CS.GetFixedField "Lang", sLang
+      CS.GetFieldUnicode "100", 1, s100
       CS.GetFieldUnicode "300", 1, s300
       CS.GetFixedField "LitF", sLitF
       CS.GetFixedField "Biog", sBiog
@@ -99,24 +129,26 @@ Sub Main
          sOutput(1) = "copy to clipboard"
 
       'Dialog box presenting to a cataloger choices for types of call numbers
-      Begin Dialog UserDialog 220, 220, "BPL Call Number Macro"
-         GroupBox 20, 50, 180, 140, ""
+      Begin Dialog UserDialog 220, 245, "BPL Call Number Macro" '.FileDlgFunction
+         GroupBox 20, 50, 180, 162, ""
          OptionGroup .Type
          OptionButton  24,  55, 80, 14, "&EASY BOOK"
          OptionButton  24,  75, 80, 14, "&FICTION"
          OptionButton  24,  95, 80, 14, "&DEWEY"
-         OptionButton  24,  115, 80, 14, "DEWEY + SUBJECT"
-         OptionButton  24,  135, 80, 14, "&BIOGRAPHY"
-         OptionButton  24,  155, 80, 14, "&MOVIE"
-         OptionButton  24,  175, 80, 14, "&TV"
+         OptionButton  24,  115, 80, 14, "DEWEY+&NAME"
+         OptionButton  24,  135, 80, 14, "DEWEY+&SUBJECT"
+         OptionButton  24,  155, 80, 14, "&BIOGRAPHY"
+         OptionButton  24,  175, 80, 14, "&MOVIE"
+         OptionButton  24,  195, 80, 14, "&TV"
          
          Text          150, 57, 40, 24, "(jje, jer)"
          Text          130, 77, 64, 20, "( _fc, _my, _sf, _sh)"
          Text          134, 97, 64, 20, "( _nf, _ej, _nf, _ej)"
-         Text          155, 117, 30, 14, "(anf)"
-         Text          155, 137, 30, 10, "( _bi)"
-         Text          155, 157, 30, 10, "( _dv)"
+         Text          155, 117, 64, 14, "(_nf)"
+         Text          155, 137, 30, 14, "(anf)"
+         Text          155, 157, 30, 10, "( _bi)"
          Text          155, 177, 30, 10, "( _dv)"
+         Text          155, 197, 30, 10, "( _dv)"
          DropListBox   20, 10, 70, 115, sFormat(), .sFormat
          Text          92, 12, 40, 14, "FORMAT"
          Textbox       135, 11, 20, 13, .sInitials
@@ -124,33 +156,51 @@ Sub Main
          DropListBox   20, 30, 70, 40, sAudience(), .sAudience
          Text          92, 32, 40, 14, "AUDIENCE"
          DropListBox   135, 30, 65, 60, sOutput(), .sOutput
-         OkButton      40, 200,  54, 16
-         CancelButton  120, 200,  54, 16
+         OkButton      40, 220,  54, 16
+         CancelButton  120, 220,  54, 16
       End Dialog
+
       Dim dCallNum as UserDialog
+
       'populate INITIALS box with default value
       dCallNum.sInitials = sDefaultInitials
+
       'selects most likely audience, format, and call number choice
       If InStr("abcj", sAudn) <> 0 And sAudn <> "" Then
          dCallNum.sAudience = 0
       Else
          dCallNum.sAudience = 1
       End If
+
+      ' format & callNum type
       If sRecType = "a" Then
+         ' microfilm & microfish
          If sItemForm = "a" Or sItemForm = "b" Then
             dCallNum.sFormat = 10
          End If
+         
          If InStr("1fj", sLitF) <> 0 And sLitF <> "" Then
             If InStr("ab", sAudn) <> 0 and sAudn <> "" Then
+               ' picture book
                dCallNum.Type = 0
             Else
+               ' regular fiction
                dCallNum.Type = 1
             End If
-         ElseIf InStr("0dehimps", sLitF) <> 0 And (sBiog = "" Or sBiog = "d" Or sBiog = "c") Then
-            dCallNum.Type = 2
+
+         ElseIf InStr("dehimps", sLitF) <> 0 And s100 <> "" And sBiog <> "a" And sBiog <> "b" Then
+            ' dewey + name
+            dCallNum.Type = 3
+
          ElseIf Instr("0i", sLitF) <> 0 And (sBiog = "a" Or sBiog = "b") Then
-            dCallNum.Type = 4
+            dCallNum.Type = 5
+            
+         Else
+            ' dewey
+            dCallNum.Type = 2
+            
          End If
+
       ElseIf sRecType = "c" Or sRecType = "d" Then
          dCallNum.sFormat = 9
          dCallNum.Type = 2
@@ -159,7 +209,7 @@ Sub Main
          If sLTxt = "f" Then
             dCallNum.Type = 1
          ElseIf InStr("abmt", sLTxt) <> 0 And sLTxt <> "" Then
-            dCallNum.Type = 4
+            dCallNum.Type = 5
          Else
             dCallNum.Type = 2
          End If
@@ -171,11 +221,11 @@ Sub Main
             dCallNum.sFormat = 1
          End If
       ElseIf sRecType = "j" Then
-         dCallNum.sFormat = 4
+         dCallNum.sFormat = 5
          MsgBox "Please consider using BPLMusicCD macro instead"
       ElseIf sRecType = "g" And (sTMat = "v" Or sTMat = "m") Then
-         dCallNum.sFormat = 6
-         ' type 5 (movie) or 6 (tv)
+         dCallNum.sFormat = 7
+         ' type 6 (movie) or 7 (tv)
          'sample first 650 if Drama
          CS.GetField "650", 1, s650
          If InStr(s650, "Drama.") <> 0 Or InStr(s650, "Juvenile drama.") <> 0 Then
@@ -184,15 +234,15 @@ Sub Main
             CS.GetField "130", 1, s130
             CS.GetField "730", 1, s730
             If InStr(s655, "television") <> 0 Or InStr(s130, "(Television") <> 0 Or InStr(s730, "(Television") <> 0 Then
-               dCallNum.Type = 6
+               dCallNum.Type = 7
             Else
-               dCallNum.Type = 5
+               dCallNum.Type = 6
             End If
          Else
             bool = CS.GetField("600", 1, s600)
             If bool = TRUE Then
                'suggest biography call type
-               dCallNum.Type = 4
+               dCallNum.Type = 5
             Else
                dCallNum.Type = 2
             End If
@@ -235,8 +285,8 @@ CaseType:
       Select Case dCallNum.Type
       Case 0
       'creates call number for juvenile easy and easy reader books
-         sCallType = "easy"
-         s099 = "099  " & sFormatPrefix & sLangPrefix & "J-E "
+         sCallType = "eas"
+         s099 = "099  " & sFormatPrefix & sLangPrefix & "J-E " & Chr(223) & "a "
       Case 1
       'creates call number for fiction
          sCallType = "fic"
@@ -247,25 +297,29 @@ CaseType:
          sDewey = Dewey(sAudn,sCallType)
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & sDewey
       Case 3
+      'creates call number for literary works by a single author (pattern: Dewey + Name)
+         sCallType = "den"
+         sDewey = Dewey(sAudn,sCallType)
+         s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & sDewey
+      Case 4
       'creates call number for Dewey with subject
-         sCallType = "d_sub"
+         sCallType = "des"
          sDewey = Dewey(sAudn,sCallType)
       'check if this call number is valiable for juvenile material
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & sDewey
-      Case 4
+      Case 5
       'creates call number for biography
          sCallType = "bio"
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & "B " & Chr(223) & "a "
-      Case 5
+      Case 6
       'creates call number for DVD feature movies
          sCallType = "mov"
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & "MOVIE " & Chr(223) & "a "
-      Case 6
+      Case 7
       'creates call number for DVD tv fictional show
          sCallType = "tvs"
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & "TV " & Chr(223) & "a "
       End Select
-
       
       Call CutterArray(sCutterArr,sCallType,sDewey)
       sCutter = Cutter(sCutterArr,sCallType,sBiog,sLTxt)
@@ -301,13 +355,20 @@ Done:
 
 Call Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType,sItemForm, sLitF, sTMat, sLTxt, f, a)
 End Sub
+'##############################################################
+
+Function FileDlgFunction(identifier$, action, suppvalue)
+   DlgFocus 0
+End Function
+
 
 '##############################################################
 
 Function Dewey(sAudn,sCallType)
 'creates string with Dewey number taken from 082 field
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
+
    Dim s082$, sLastDigit$
    Dim x as Integer
    Dim place as Integer
@@ -398,11 +459,8 @@ Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
    
    Dim sSubjectArr$
    
-   If sCallType = "easy" Then
-      Goto Rule1
-   End If
-   If sCallType = "mov" Or sCallType = "tvs" Then
-      Goto Rule4
+   If sCallType = "eas" Then
+      Goto Rule2
    End If
    If sCallType = "fic" Then
       Goto Rule2
@@ -410,32 +468,48 @@ Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
    If sCallType = "dew" Then
       Goto Rule3
    End If
-   If sCallType = "d_sub" Then
+   If sCallType = "den" Then
+      Goto Rule1
+   End If
+   If sCallType = "des" Then
       GoTo Rule5
    End If
    If sCallType = "bio" Then
       GoTo Rule5
    End If
+   If sCallType = "mov" Or sCallType = "tvs" Then
+      Goto Rule4
+   End If
    
 Rule1:
-'full author last name or nothing
-   If InStr(sCutterArr, "100_") <> 0 Then
-      start_point = InStr(sCutterArr, "100_")
-      temp$ = Mid(sCutterArr, start_point + 4)
-      end_point = InStr(temp$, Chr(9))
-      sCutter = Chr(223) & "a " & Left(temp$, end_point - 1)
-   Else
-      MsgBox "INFO: Cutter not needed, easy materials with title entry have call number J-E without a cutter."
-   End If
-   Goto Done
-   
-Rule2:
-'full author last name or 1st letter of title
+'full author last name or error
    If InStr(sCutterArr, "100_") <> 0 Then
       start_point = InStr(sCutterArr, "100_")
       temp$ = Mid(sCutterArr, start_point + 4)
       end_point = InStr(temp$, Chr(9))
       sCutter = Left(temp$, end_point - 1)
+   Else
+      MsgBox "INCOMPLETE: Dewey+Name should be used for literary works by a single author (ex.: 811 POE = collection of E.Poe poems)"
+      sCutter = Chr(252)
+   End If
+   Goto Done
+   
+Rule2:
+'full author last name, first word of 110, or 1st letter of title
+   If InStr(sCutterArr, "100_") <> 0 Then
+      start_point = InStr(sCutterArr, "100_")
+      temp$ = Mid(sCutterArr, start_point + 4)
+      end_point = InStr(temp$, Chr(9))
+      sCutter = Left(temp$, end_point - 1)
+   ElseIf InStr(sCutterArr, "110_") <> 0 Then
+      start_point = InStr(sCutterArr, "110_")
+      temp$ = Mid(sCutterArr, start_point + 4)
+      end_point = InStr(temp$, Chr(9))
+      sCutter = Left(temp$, end_point - 1)
+      If InStr(sCutter, " ") <> 0 Then
+         end_point = InStr(sCutter, " ")
+         sCutter = Left(sCutter, end_point - 1)
+      End If
    Else
       If InStr(sCutterArr, "245_") <> 0 Then
          start_point = InStr(sCutterArr, "245_")
@@ -526,9 +600,7 @@ Rule5:
       End If
    End If
    
-   If (sBiog = "a" And sLTxt = "") Or (sBiog = "" And InStr("am", sLTxt) <> 0 And sLTxt <> "") And sCallType = "bio" Then
-      Goto Rule6
-   ElseIf sBiog = "b" Or (InStr("bt", sLTxt) <> 0 And sBiog <> "") Or sCallType = "d_sub" Or sCallType = "bio" Then
+   If sBiog = "b" Or (InStr("bt", sLTxt) <> 0 And sBiog <> "") Or (sBiog = "a" And sLTxt = "") Or (sBiog = "" And InStr("am", sLTxt) <> 0 And sLTxt <> "") Or sCallType = "des" Or sCallType = "bio" Then
       If InStr(sCutterArr, "100_") <> 0 Then
          start_point = InStr(sCutterArr, "100_")
          temp$ = Mid(sCutterArr, start_point + 4, 1)
@@ -549,6 +621,7 @@ Rule5:
    Goto Done
    
 Rule6:
+'Rule obsolete (cuttering autobiography has changed to main entry on June 14, 2019)
 'full last name from 600 and 1st letter of title if autobiography
    If InStr(sCutterArr, "245_") <> 0 Then
       start_point = InStr(sCutterArr, "245_")
@@ -603,7 +676,7 @@ End Sub
 Sub CutterArray(sCutterArr,sCallType,sDewey)
 'Creates a string used in cuttering based on author/title field
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    Dim sNameTitle$
    Dim i as Integer
       
@@ -631,8 +704,9 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
       Call Diacritics(sNameTitle)
       sCutterArr = sCutterArr & sNameTitle & Chr(9)
    End If
+
    
-   If sCallType = "d_sub" Or sCallType = "bio" Then
+   If sCallType = "des" Or sCallType = "bio" Then
       i = 1
       Do While CS.GetFieldUnicode("600", i, sNameTitle)
          If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
@@ -641,7 +715,7 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
          End If
          i = i + 1
       Loop
-      If sCallType = "d_sub" Then
+      If sCallType = "des" Then
          i = 1
          Do While CS.GetFieldUnicode("610", i, sNameTitle)
             If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
@@ -693,9 +767,6 @@ End Sub
 
 Sub Diacritics(sNameTitle)
 'removes diacritic marks and other unwanted characters from a string
-   Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
-   Dim i as Integer
    
    Indicator = Mid(sNameTitle,5,1)
    If Indicator = "0" Or Indicator = " " Then
@@ -795,35 +866,38 @@ End Sub
 '##################################################
 
 Sub LocalDewey(s082,sCallType)
-   Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
-   Dim sClassNum$, sFirstDig$, sFirstTwoDig$, sFirstThreeDig$, sFirstFiveDig$, sFirstSixDig$, sFirstSevenDig$, s3rdTo7thDig$
+
+   Dim sClassNum$, s1stDig$, s1stTwoDig$, s1stThreeDig$, s1stFiveDig$, s1stSixDig$, s1stSevenDig$, s3rdTo7thDig$
    Dim s2ndDig$, s3rdDig$, s5thDig$, s6thDig$, s7thDig$, s8thDig$, s9thDig$
+   Dim sLitTimeTableMsg$
    
    sClassNum = Left(s082,8)
-   sFirstDig = Left(s082,1)
-   sFirstTwoDig = Left(s082,2)
+   
+   s1stDig = Left(s082,1)
    s2ndDig = Mid(s082,2,1)
-   sFirstThreeDig = Left(s082,3)
    s3rdDig = Mid(s082,3,1)
-   sFirstFiveDig = Left(s082,5)
    s5thDig = Mid(s082,5,1)
-   sFirstSixDig = Left(s082,6)
    s6thDig = Mid(s082,6,1)
-   sFirstSevenDig = Left(s082,7)
    s7thDig = Mid(s082,7,1)
    s8thDig = Mid(s082,8,1)
    s9thDig = Mid(field082,9,1)
+   
+   s1stTwoDig = Left(s082,2)
+   s1stThreeDig = Left(s082,3)
+   s1stFiveDig = Left(s082,5)
+   s1stSixDig = Left(s082,6)
+   s1stSevenDig = Left(s082,7)
    s3rdTo7thDig = Mid(s082,3,5)
+   
+   sLitTimeTableMsg = "INFO: BPL does not use the time table in literature classification. Removing time table digits..."
    
    'Shakespeare call number
    If sClassNum = "822.33" Then
-      s082 = s082 & " " & Chr(223) & "a " & "S52"
-      MsgBox "INCOMPLETE: Please correct the cutter. Call number for Shakespeare includes Dewey number, Sanborn cutter S52, letter and number from Dewey optional table, and picked by cataloger cutter, example: 822.33 S52 S7 G (Hamlet - text, edited by R.Gill)"
+      MsgBox "INCOMPLETE: Please correct the cutter. Call number for Shakespeare includes Dewey number, letter and number from Dewey optional table, and picked by cataloger cutter, example: 822.33 S7 G (Hamlet - text, edited by R.Gill). Please do not use cuttering created by the macro."
       Goto Done
    End If
    'specific programming languages
-   If sCallType <> "d_sub" Then
+   If sCallType <> "des" Then
       If sClassNum = "005.133" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of programming language, example: 005.133 C++ K. Please insert language name before the cutter or run macro again and select Dewey + Subject option."
@@ -866,7 +940,7 @@ Sub LocalDewey(s082,sCallType)
       End If
    
       'general purpose programs
-      If sFirstFiveDig = "005.5" Then
+      If s1stFiveDig = "005.5" Then
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of program or software package, example: 005.5 OFFICE B, 005.54 EXCEL C. Please insert the name of program or software package before the cutter or run macro again and select Dewey + Subject option."
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
       End If
@@ -889,7 +963,7 @@ Sub LocalDewey(s082,sCallType)
    End If
    
    'travel guides
-   If sFirstTwoDig = "91" And s3rdDig <> "0" And s3rdDig <> "1" And s3rdDig <> "2" Then
+   If s1stTwoDig = "91" And s3rdDig <> "0" And s3rdDig <> "1" And s3rdDig <> "2" Then
       MsgBox "INFO: 082 field indicates the item is a guidebook. BPL Dewey number for guidebooks stops before 04 notation."
       If InStr(s082, "04") Then
          place = InStr(s082, "04")
@@ -898,13 +972,13 @@ Sub LocalDewey(s082,sCallType)
    End If
    
    'Bible modern translations
-   If sFirstFiveDig = "220.5" Then
+   If s1stFiveDig = "220.5" Then
       MsgBox "INCOMPLETE: Please correct the cutter. BPL call number for Bible includes Sanborn cutter B582 and cataloger's supplied cutter (use editor or publisher) of one or more letters."
       s082 = s082 & " " & Chr(223) & "a " & "B582" 
    End If
    
    'removes time periods from American English, English, Spanish, German, French & Italian literature call number
-   If sFirstDig = "8" And InStr("123456", s2ndDig) <> 0 Then
+   If s1stDig = "8" And InStr("123456", s2ndDig) <> 0 Then
       If InStr("12345678", s3rdDig) <> 0 And InStr("123456789", s5thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -913,22 +987,23 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 4)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 3)
          End If
       End If
       If s3rdTo7thDig = "0.800" Or s3rdTo7thDig = "0.900" Then
-         MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+         MsgBox sLitTimeTableMsg
          s082 = Left(s082,5)
       End If
    End If
+
    'removes time periods from Slavic literatures call numbers
-   If sFirstFiveDig = "891.8" And InStr("123456789", s6thDig) <> 0 Then
+   If s1stFiveDig = "891.8" And InStr("123456789", s6thDig) <> 0 Then
       If InStr("12345678", s7thDig) <> 0 And InStr("123456789", s8thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -937,18 +1012,19 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 7)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 7)
          End If
       End If
    End If
+
    'removes time periods from Finnic literatures call numbers
-   If sFirstSixDig = "894.54" And InStr("15", s7thDig) <> 0 Then
+   If s1stSixDig = "894.54" And InStr("15", s7thDig) <> 0 Then
       If InStr("12345678", s8thDig) <> 0 And InStr("1234", s9thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -957,18 +1033,19 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 8)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 8)
          End If
       End If
    End If
+
    'removes time periods from Russian literature call numbers
-   If sFirstFiveDig = "891.5" And InStr("12345678", s6thDig) <> 0 Then
+   If s1stFiveDig = "891.7" And InStr("12345678", s6thDig) <> 0 Then
       If InStr("12345", s7thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -977,18 +1054,19 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 6)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 6)
          End If
       End If
    End If
+
   'removes time periods from Ukrainian literatures call numbers
-   If sFirstSixDig = "891.79" And InStr("12345678", s7thDig) <> 0 Then
+   If s1stSixDig = "891.79" And InStr("12345678", s7thDig) <> 0 Then
       If InStr("12345", s8thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -997,18 +1075,19 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 7)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 7)
          End If
       End If
    End If
+
    'removes time periods from Japanese literature call numbers
-   If sFirstFiveDig = "895.6" And InStr("12345678", s6thDig) <> 0 Then
+   If s1stFiveDig = "895.6" And InStr("12345678", s6thDig) <> 0 Then
       If InStr("123456", s7thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -1017,18 +1096,19 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 6)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 6)
          End If
       End If
    End If
+
    'removes time periods from Chinese literature call numbers
-   If sFirstFiveDig = "895.1" And InStr("12345678", s6thDig) <> 0 Then
+   If s1stFiveDig = "895.1" And InStr("12345678", s6thDig) <> 0 Then
       If InStr("123456", s7thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -1037,18 +1117,19 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 6)
             rt$ = Mid(s082, place)
             s082 = lt$ + "0" + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 6)
          End If
       End If
    End If
+
    'removes time periods from other Germanic literatures call numbers (includes Yiddish, Swedish, Old Norse, Icelandic)
-   If sFirstThreeDig = "839" And InStr("124567", s5thDig) <> 0 Then
+   If s1stThreeDig = "839" And InStr("124567", s5thDig) <> 0 Then
       If InStr("12345678", s6thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -1057,18 +1138,19 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 6)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 6)
          End If
       End If
    End If
+
    'removes time periods from Portuguese literature
-   If sFirstThreeDig = "869" And InStr("12345678", s5thDig) <> 0 Then
+   If s1stThreeDig = "869" And InStr("12345678", s5thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
                place = InStr(s082, "08")
@@ -1076,17 +1158,18 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 5)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 5)
          End If
    End If
+
    'removes time periods from Danish, Norwegian literatures call numbers 
-   If sFirstFiveDig = "839.8" And InStr("12", s6thDig) <> 0 Then
+   If s1stFiveDig = "839.8" And InStr("12", s6thDig) <> 0 Then
       If InStr("12345678", s7thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -1095,18 +1178,19 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 7)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 7)
          End If
       End If
    End If
+
    'removes time periods from Arabic literatures call numbers 
-   If sFirstFiveDig = "892.7" And InStr("12345678", s6thDig) <> 0 And InStr("1234567", s7thDig) <> 0 Then
+   If s1stFiveDig = "892.7" And InStr("12345678", s6thDig) <> 0 And InStr("1234567", s7thDig) <> 0 Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
                place = InStr(s082, "08")
@@ -1114,17 +1198,18 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 6)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 6)
          End If
    End If
+ 
    'removes time periods from Classic Greek and Latin
-   If sFirstDig = "8" And InStr("78", s2ndDig) <> 0 Then
+   If s1stDig = "8" And InStr("78", s2ndDig) <> 0 Then
       If InStr("12345678", s3rdDig) <> 0 And s5thDig = "0" And InStr("1234", s6thDig) <> 0  Then
          If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
             If InStr(s082,"08") <> 0 Then
@@ -1133,14 +1218,33 @@ Sub LocalDewey(s082,sCallType)
             If InStr(s082, "09") <> 0 Then
                place = InStr(s082, "09")
             End If
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             lt$ = Left(s082, 4)
             rt$ = Mid(s082, place)
             s082 = lt$ + rt$
          Else
-            MsgBox "INFO: BPL doesn't use time tables in literature call numbers. Removing time table digits..."
+            MsgBox sLitTimeTableMsg
             s082 = Left(s082, 3)
          End If
+      End If
+   End If
+ 
+   ' removes time period digits from Modern Persian (Farsi) literature
+   If s1stSixDig = "891.55" And InStr("12345678", s7thDig) <> 0 Then
+      If InStr(s082,"08") <> 0 Or InStr(s082, "09") <> 0 Then
+         If InStr(s082,"08") <> 0 Then
+            place = InStr(s082, "08")
+         End If
+         If InStr(s082, "09") <> 0 Then
+            place = InStr(s082, "09")
+         End If
+         MsgBox sLitTimeTableMsg
+         lt$ = Left(s082, 7)
+         rt$ = Mid(s082, place)
+         s082 = lt$ + rt$
+      Else
+         MsgBox sLitTimeTableMsg
+         s082 = Left(s082, 7)
       End If
    End If
    
@@ -1151,14 +1255,15 @@ End Sub
 
 Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType, sItemForm, sLitF, sTMat, sLTxt, f, a)
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
+
    Dim s082$, s338$, s347$, sFields$
    'f - numerical code of format
    'a - numerical code of audience
 
    bool082 = CS.GetField("082", 1, s082)
 AudnCheck:
-   If sCallType = "easy" Then
+   If sCallType = "eas" Then
       If InStr("ab", sAudn) <> 0 And sAudn <> "" Then
          If bool082 = TRUE Then
             If InStr(s082, "[FIC]") <> 0 Then
@@ -1168,7 +1273,7 @@ AudnCheck:
       ElseIf sAudn = "j" Then
          MsgBox "INFO: Caution advised. Record coded as broad juvenile material (fixed field Audn: j)."
       Else
-         MsgBox "AUDIENCE conflict: Record not coded as easy material (fixed field Audn). Please verify your selection."
+         MsgBox "AUDIENCE conflict: Record not coded as eas material (fixed field Audn). Please verify your selection."
       End If
       If f = 11 Then
          MsgBox "AUDIENCE conflict: J-E call numbers can not be used for Readalong books. Use the J prefix instead"
@@ -1178,7 +1283,7 @@ AudnCheck:
          If InStr("cj", sAudn) <> 0 And sAudn <> "" Then
             If a = 0 Then
                If InStr(s082, "[E]") <> 0 And f <> 11 Then
-                  MsgBox "AUDIENCE conflict: The material is classed as easy fiction (082 field - [E]). Please verify your selection."
+                  MsgBox "AUDIENCE conflict: The material is classed as eas fiction (082 field - [E]). Please verify your selection."
                Else
                   Goto LitCheck
                End If
@@ -1205,7 +1310,7 @@ LitCheck:
          If InStr("1fj", sLitF) = 0 Then
             MsgBox "LITERARY FORM conflict: Fixed field indicates the material is non-fiction. Please verify your selection."
          End If
-      ElseIf sCallType = "easy" Then
+      ElseIf sCallType = "eas" Then
          Goto BioCheck
       Else
          If InStr("1fj", sLitF) <> 0 Then
@@ -1215,7 +1320,7 @@ LitCheck:
    End If
 BioCheck:
    If sRecType = "a" Then
-      If InStr("bio+d_sub", sCallType) <> 0 Then 
+      If InStr("bio+des", sCallType) <> 0 Then 
          If InStr("abd", sBiog) = 0 Then
             MsgBox "INFO: Caution advised. Record not coded as a biography/autobiography."
          Else
@@ -1228,7 +1333,7 @@ BioCheck:
       End If
    ElseIf sRecType = "i" Then
       If InStr("abmt", sLTxt) <> 0 and sLTxt <> "" Then
-         If InStr("bio+d_sub", sCallType) = 0 Then
+         If InStr("bio+des", sCallType) = 0 Then
             MsgBox "INFO: Caution advised. Record coded as a biography/autobiography."
          End If 
       End If
@@ -1304,12 +1409,13 @@ CutterCheck:
    
 End Sub
 
-'##################################################
+'########################################################################
 
 Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
+
    Dim s949$, sCD, sDVD, sIndcator$, sOverlay$, sLargePrint$, SierraCode$, s007$, s006$
    Dim n as Integer
 
@@ -1453,39 +1559,7 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
          bool = CS.SetField(1, s006)
       End If
    End If
-
-   'stripping unwanted MARC fields from the record
-   n = 6
-   nBool = CS.GetFieldLine(n,subhead$)
-   Do While nBool = TRUE
-      If InStr("653", Mid(subhead$, 1, 3)) <> 0 Then
-         CS.DeleteFieldLine n
-      End If      
-      If InStr("600,610,611,630,650,651,655", Mid(subhead$, 1, 3)) <> 0 Then
-         If Mid(subhead$,5,1) = "0" Or Mid(subhead$,5,1) = "1" Or InStr(subhead$, Chr(223) & "2 gsafd") _
-          Or InStr(subhead$, Chr(223) & "2 fast") Or InStr(subhead$, Chr(223) & "2 lcsh") _
-          Or InStr(subhead$, Chr(223) & "2 bidex") Or InStr(subhead$, Chr(223) & "2 lcgft") _
-          Or InStr(subhead$, Chr(223) & "2 gmgpc") Or InStr(subhead$, Chr(223) & "2 lctgm") _
-          Or InStr(subhead$, Chr(223) & "2 aat") Then
-            If InStr(subhead$, Chr(223) & "v Popular works") <> 0 Then
-               place = InStr(subhead$, Chr(223) & "v Popular works")
-               lt$ = Left(subhead$, place - 2)
-               rt$ = Mid(subhead$, place + 16)
-               subhead$ = lt$ + rt$
-               CS.DeleteFieldLine n
-               CS.AddFieldLine n, subhead$
-            End If
-            n = n + 1
-         Else
-            'remove apostrophe in the beginning of the line below to display deleted subject headings
-            'MsgBox subhead$
-            CS.DeleteFieldLine n
-         End If
-      Else
-         n = n + 1 
-      End If
-      nBool = CS.GetFieldLine(n,subhead$) 
-   Loop
+   
    If sItemForm <> "o" Then
       n = 1
       nBool = CS.GetField("020", n, isbn$)

@@ -9,22 +9,29 @@
 '                  populate default values for the next run of the macro, allowing user to apply the same template to
 '                  consecutive order records
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: September 26, 2017 ; v. 1.4
+'Latest update: December 1, 2020 ; v. 1.9
 '
-'To add a location to the list go the section marked XXXXXXXX and 
+'v1.9 details (12-01-2020): YBP bug fixed
+'v1.8 details (09-31-2020): added new vendor - NESTO
+'v1.7 details (07-22-2020): data persisted in Connexion AppData folder specific to each user
+'v1.6 details (03-10-2020): WNB vendor code added
+'v1.5 details: Ugly Duckling Press vendor code (udp) added
+'
+'
+'To add a location to the list go the section marked XXXXXXXX and
 'add a new line after the last line "sLocation([next number])" then
 'mofify number in parenthesis in section's first line: from "ReDim sLocation([number])" to "ReDim sLocation([next number])
 '
-'To add a vendor to the list go to the section marked ZZZZZZZZ and 
-'add a new line after the last line: "sVendor([next number]) = "[vendor code]" then 
-'modify number in parenthesis in section's first line: from "ReDim sVendor([number]") to "ReDim sVendor([next number]) 
+'To add a vendor to the list go to the section marked ZZZZZZZZ and
+'add a new line after the last line: "sVendor([next number]) = "[vendor code]" then
+'modify number in parenthesis in section's first line: from "ReDim sVendor([number]") to "ReDim sVendor([next number])
 
 Option Explicit
 
 Sub Main
 
    Dim CS As Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS  = GetObject(,"Connex.Client")
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
       Dim s949$, s960$, s961$, sForm$, sPrice$, sTodaysDate$, sRDate$, sVendorArr$, sOrderType, sOrderCode3, _
          lt$, rt$, temp$, sType$
@@ -39,7 +46,7 @@ Sub Main
       Dim sDefaultValues$, sDefInitials$, sDefFund$
       Dim DefLocation%, DefOCode3%, DefOType%, DefVendor%
       Dim checkchar$, pricepattern, fundpattern, copiespattern, retvalue%
-      
+
       'find current date and format it
       sTodaysDate = Date
       Do While InStr(sTodaysDate, "/")
@@ -50,15 +57,15 @@ Sub Main
       Loop
       'find record type to populate order record's Form field
       CS.GetFixedField "Type", sType
-      
+
       ReDim sOCode3(1)
          sOCode3(0) = "DOMESTIC"
          sOCode3(1) = "FOREIGN"
       ReDim sOType(1)
          sOType(0) = "APPROVAL"
          sOType(1) = "FIRM ORDER"
-         
-'XXXXXXXXXX   
+
+'XXXXXXXXXX
       ReDim sLocation(18)
          sLocation(0) = " "
          sLocation(1) = "MAB"
@@ -80,7 +87,7 @@ Sub Main
          sLocation(17) = "SC"
          sLocation(18) = "SLR"
 'ZZZZZZZZZZ
-      ReDim sVendor(36)
+      ReDim sVendor(39)
          sVendor(0) = " "
          sVendor(1) = "4398"
          sVendor(2) = "ALIBR"
@@ -104,23 +111,27 @@ Sub Main
          sVendor(20) = "JERUS"
          sVendor(21) = "KAR"
          sVendor(22) = "KEN"
-         sVendor(23) = "LAT" 
+         sVendor(23) = "LAT"
          sVendor(24) = "LEXI"
          sVendor(25) = "LNR"
          sVendor(26) = "MDJ"
          sVendor(27) = "MEXIC"
          sVendor(28) = "MGENS"
-         sVendor(29) = "NORTE"
-         sVendor(30) = "PRAGE"
-         sVendor(31) = "PVL"
-         sVendor(32) = "RETTA"
-         sVendor(33) = "SBD"
-         sVendor(34) = "SUR"
-         sVendor(35) = "TROP"
-         sVendor(36) = "YBP"
-              
+         sVendor(29) = "NESTO"
+         sVendor(30) = "NORTE"
+         sVendor(31) = "PRAGE"
+         sVendor(32) = "PVL"
+         sVendor(33) = "RETTA"
+         sVendor(34) = "SBD"
+         sVendor(35) = "SUR"
+         sVendor(36) = "TROP"
+         sVendor(37) = "WNB"
+         sVendor(38) = "YBP"
+         sVendor(39) = "UDP"
+
       'read default data from text file stored in macro folder
       sFileName = "acq_data.txt"
+      sFileName = Mid(Environ(2), 9) + "\OCLC\Connex\Profiles\acq_data.txt"
       If Dir$ (sFileName) <> "" Then
          filenumber = FreeFile
          Open sFileName For Input As filenumber
@@ -146,7 +157,7 @@ Sub Main
          DefVendor = 0
          sDefInitials = " "
       End If
-      
+
 'Dialog box presenting order record options
 MenuWindow:
       Begin Dialog MainWindow 247, 108, "NYPL Research Order Record"
@@ -185,9 +196,9 @@ MenuWindow:
       On Error Resume Next
       Dialog dOrderRec
       If Err = 102 Then Exit Sub
-      
+
       'match selected option with Sierra's value for Form, Order Type, and Order Code 3
-      
+
       If sType = "a" Then
          sForm = "b"
       Elseif sType = "c" Then
@@ -212,13 +223,13 @@ MenuWindow:
       ElseIf dOrderRec.sOCode3 = 1 Then
          sOrderCode3 = "f"
       End If
-      
+
       'remove any white spaces from user entered values
       dOrderRec.sFund = Trim(dOrderRec.sFund)
       dOrderRec.sPrice = Trim(dOrderRec.sPrice)
       dOrderRec.sCopies = Trim(dOrderRec.sCopies)
       dOrderRec.sInitials = Trim(dOrderRec.sInitials)
-      
+
       'user input error handling
       If dOrderRec.sLocation = 0 Then
          MsgBox "Forgot about the location! Let's try again..."
@@ -247,7 +258,7 @@ MenuWindow:
                      Case " ",  ".",  ",",  "/", ";", ":", "[", "]", "\", "-", "=", "`", "_", "+", "*", "'", "!", _
                               "@", "#", "$", "%", "^", "&", "*", "(", ")"
                         MsgBox "Fund code includes illegal character. Before I report it ... Let's try again..."
-                        GoTo MenuWindow  
+                        GoTo MenuWindow
                   End Select
                      i = i + 1
                Wend
@@ -255,7 +266,7 @@ MenuWindow:
          ElseIf retvalue = 0 Then
             MsgBox "It looks fund code is incorrect. Let's try again..."
             Goto MenuWindow
-         End If 
+         End If
       End If
       If dOrderRec.sPrice = "" Then
          MsgBox "Forgot about price! Let's try again..."
@@ -291,7 +302,7 @@ MenuWindow:
             End If
          End If
       End If
-         
+
       'create strings of 949 (load table and authorization for load), 960 (order fixed fields), & 961 (order variable fields)
       s949 = "949  *recs=researchord;ins=ckgriffin;"
       s960 = "960  " & _
@@ -308,12 +319,12 @@ MenuWindow:
             Chr(223) & "m 1 " & _
             Chr(223) & "v " & LCase(sVendor(dOrderRec.sVendor))
       s961 = "961  " & Chr(223) & "d " & dOrderRec.sInitials
-      
+
       'insert 949,960, & 961 strings into the displayed record
       CS.SetField 1, s949
       CS.SetField 1, s960
       CS.SetField 1, s961
-      
+
       'populate default data in file in Connexion Macro folder; each element separated with colon
       filenumber = FreeFile
       Open sFileName For Output As filenumber
@@ -325,15 +336,15 @@ MenuWindow:
                        Trim(dOrderRec.sInitials)
       Print #filenumber, sDefaultValues
       Close #filenumber
-      
+
       'export the record
       CS.Export
-      
+
       'determine if price in dollars or euro
       If InStr("CSL,HRR,BLAN", sVendor(dOrderRec.sVendor)) <> 0 Then
          MsgBox "Please modify price in Sierra. This vendor uses euro."
       End If
-      
+
    Else
       MsgBox "INFO: A bibliographic record must be displayed in order to use this macro."
       Goto Done

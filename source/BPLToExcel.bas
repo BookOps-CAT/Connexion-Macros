@@ -1,16 +1,22 @@
 'MacroName:ToExcel
 'MacroDescription: Writes ISBN, title, author and call number of displayed bib. record to Excel spreadsheet
-'Last update: October 1, 2018
-'version: v.1.1
+'Last update: March 15, 2021
+'version: v.1.2 : Windows 10 compatibility fix
    
    
 Sub Main
 
   Dim CS As Object
-  Set CS = CreateObject("Connex.Client")
+  Set CS  = GetObject(,"Connex.Client")
 
   'Set the output Excel file
-  sFileName = Mid(Environ(12), 10) + "\Desktop\LargePrint.xls"
+   If Environ("HOMEPATH") <> 0 Then
+      sFileName = "C:" & Environ("HOMEPATH") + "\Desktop\LargePrint.xls"
+   Else
+      MsgBox "System is missing the 'HOMEPATH' environmental variable"
+   End If
+   
+
 
   If Dir(sFileName) = "" Then
     MsgBox "File not found: " & Chr(10) & Chr(9) & sFileName & Chr(10) & Chr(10) & "Exiting..."

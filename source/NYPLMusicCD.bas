@@ -2,20 +2,27 @@
 'MacroDescription:Creates call number for NYPL music CDs ; 
                   'call numbers can be insterted into displayed record or copied into clipboard for pasting into MidWest platform
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: February 05, 2015 (v. 1.1)
+'Last updated: April 5, 2021 (v. 1.3)
+
+'v1.3 details (April 5, 2021):
+'  * removal of MARC tags from unsupported thesauri (keeps lcsh, fast, gsafd, lcgft, bidex, gmgpc, lctgm, att, BookOps)
+'v1.2 details:
+'  * catalogers intials file moved to Connexion Profiles directory
+
 'Existing issues: lower screeen resolution may cause failure for drop-down menu to appear (most likely genre since it's rahter long
                  ' at this time the menues have hard coded lenght, in case of problems lower DropBoxCombo & ListBoxCombo
                  ' last value to 200 or less
 
 Declare Sub Diacritics(sHeading)
 Declare Function CutterArray()
+Declare Sub CleanSubjects()
 Declare Sub CutterManipulation(sHeading)
 Declare Sub InsertCallNumber(sField948, sInitials)
 
 Sub Main
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
       Dim sAudn$, sRecType$, sCutter$, sField948$, sRecNumber$
       Dim sGenre() As String
@@ -71,7 +78,7 @@ Sub Main
             sOutput(1) = "copy to clipboard"
             
          'read default data (initials) from text file stored in macro folder
-         sFileName = "cat_data.txt"
+         sFileName = Mid(Environ(2), 9) + "\OCLC\Connex\Profiles\cat_data.txt"
          If Dir$ (sFileName) <> "" Then
             filenumber = FreeFile
             Open sFileName for Input As filenumber
@@ -153,6 +160,9 @@ Sub Main
          Print #filenumber, sInitials
          Close #filenumber
          
+         'clean up subject headings
+         Call CleanSubjects()
+         
          'insert call  number
          Call InsertCallNumber(sField948, sInitials)
       End If
@@ -168,10 +178,12 @@ Sub Main
 Done: 
 End Sub
 
+'########################################################################
+
 Function CutterArray()
    
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim sCutterOpt$, sHeading$
    Dim i As Integer
    Dim sNonLatMessage$
@@ -245,11 +257,13 @@ Function CutterArray()
 CutterArray = sCutterOpt
 End Function
 
+'########################################################################
+
 Sub Diacritics(sHeading)
 'removes diacritic marks and other unwanted characters from a string
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim i as Integer
 
    i = 1
@@ -292,10 +306,12 @@ Sub Diacritics(sHeading)
    Wend
 End Sub
 
+'########################################################################
+
 Sub CutterManipulation(sHeading)
 
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim sEntryType$
    
    Call Diacritics(sHeading)
@@ -359,9 +375,56 @@ Sub CutterManipulation(sHeading)
 
 End Sub
 
+'########################################################################
+
+Sub CleanSubjects()
+   Dim CS as Object
+   Set CS = GetObject(,"Connex.Client")
+   Dim sTag$
+   Dim nBool
+   Dim n As Integer
+   Dim DelArr(6 to 99) As Integer
+   
+   'strip unwanted MARC tags:
+   'remove subject from unsupported thesauri
+  
+   n = 6
+   nBool = CS.GetFieldLine(n,stag$)
+   Do While nBool = TRUE
+      If Left(sTag$, 1) = "6" Then
+         If InStr("653,654", Mid(sTag$, 1, 3)) <> 0 Then
+            DelArr(n) = n
+            'MsgBox sTag$
+         ElseIf InStr("600,610,611,630,650,651,655", Mid(sTag$, 1, 3)) <> 0 Then
+            If Mid(sTag$,5,1) = "0" Or Mid(sTag$,5,1) = "1" Or InStr(sTag$, Chr(223) & "2 gsafd") _
+               Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
+               Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
+               Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
+               Or InStr(sTag$, Chr(223) & "2 aat") Or InStr(sTag$, Chr(223) & "2 BookOps") Then
+                  'do nothing, go to the next one
+            Else
+               'MsgBox sTag$
+               DelArr(n) = n
+            End If
+         End If
+      End If
+      n = n + 1
+      nBool = CS.GetFieldLine(n,sTag$)
+   Loop
+   
+   For n = 99 to 6 Step -1
+      If DelArr(n) <> 0 Then
+         CS.DeleteFieldLine n
+      End If
+   Next
+
+End Sub
+
+'########################################################################
+
 Sub InsertCallNumber(sField948, sInitials)
    Dim CS as Object
-   Set CS = CreateObject("Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
    Dim s901$
   
    CS.SetField 1, sField948
