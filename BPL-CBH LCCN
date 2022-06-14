@@ -28,7 +28,6 @@ Sub Main
   Dim filenumber as Integer
   Dim sFileName as String
   Dim sInitials as String
-
   
  'read default data (initials) from text file stored in macro folder
  sFileName = Mid(Environ(2), 9) + "\OCLC\Connex\Profiles\cat_data.txt"
@@ -87,4 +86,3 @@ Sub Main
                 
         
 End Sub
-
