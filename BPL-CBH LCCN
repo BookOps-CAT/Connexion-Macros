@@ -83,10 +83,6 @@ Sub Main
    End If
    'End If
      CS.Reformat
-                 
-      'MsgBox "Show variable sInitials: " + sInitials
-      'MsgBox "Show variable sDefaultInitials: " + sDefaultInitials
-      'MsgBox "Show variable sLccall: " + sLccall
-      'MsgBox "Show variable sCutter: " + sCutter
+                
         
 End Sub
