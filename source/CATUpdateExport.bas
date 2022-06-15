@@ -1,7 +1,9 @@
 'MacroName:UpdateExport
 'MacroDescription:Updates OCLC holdings then exports a bibliographic record.
-'Version: 1.4
+'Version: 1.5
 
+'v1.5 (2022-05-13)
+'  * permits 69x tags (used at Schomburg, and some special collections)
 'v1.4 (2022-05-06)
 '  * adds removal of unspported subject vocabularies from 6xx tags; permits only BIDEX, BOOKOPS, FAST, GSAFD, HOMOIT, LCGFT, and LCSH
 'v1.3 (2018-07-02)
@@ -49,13 +51,14 @@ Sub CleanSubjectTags()
    n = 6
    nBool = CS.GetFieldLine(n,sTag$)
    Do While nBool = TRUE
+      'MsgBox sTag$
       If Left(sTag$, 1) = "6" Then
-         If InStr("653,654", Mid(sTag$, 1, 3)) <> 0 Then
+         If InStr("653", Mid(sTag$, 1, 3)) <> 0 Then
             DelArr(n) = n
             'MsgBox "DEL 65x: " & sTag$
          ElseIf InStr("69", Mid(sTag$, 1, 2)) <> 0 Then
-            DelArr(n) = n
-            'MsgBox "DEL 69x: " & sTag$
+            'do nothing, however these tags are coded
+            'MsgBox "Keep 69x: " & sTag$
          ElseIf InStr("600,610,611,630,648,650,651,654,655,656,657", Mid(sTag$, 1, 3)) <> 0 Then
             'LCSH
             If Mid(sTag$,5,1) = "0" Then

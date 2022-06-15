@@ -2,9 +2,11 @@
 'MacroDescription:Creates call number for NYPL music CDs ; 
                   'call numbers can be insterted into displayed record or copied into clipboard for pasting into MidWest platform
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: April 5, 2021 (v. 1.3)
+'Last updated: May 13, 2022
 
-'v1.3 details (April 5, 2021):
+'v1.4 details (05-13-2022):
+'  * removes a routine that cleans up 6xx tags (moved to CAT!UpdateExport macro)
+'v1.3 details (04-05-2021):
 '  * removal of MARC tags from unsupported thesauri (keeps lcsh, fast, gsafd, lcgft, bidex, gmgpc, lctgm, att, BookOps)
 'v1.2 details:
 '  * catalogers intials file moved to Connexion Profiles directory
@@ -15,14 +17,18 @@
 
 Declare Sub Diacritics(sHeading)
 Declare Function CutterArray()
-Declare Sub CleanSubjects()
 Declare Sub CutterManipulation(sHeading)
 Declare Sub InsertCallNumber(sField948, sInitials)
 
 Sub Main
 
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
       Dim sAudn$, sRecType$, sCutter$, sField948$, sRecNumber$
       Dim sGenre() As String
@@ -160,9 +166,6 @@ Sub Main
          Print #filenumber, sInitials
          Close #filenumber
          
-         'clean up subject headings
-         Call CleanSubjects()
-         
          'insert call  number
          Call InsertCallNumber(sField948, sInitials)
       End If
@@ -183,7 +186,12 @@ End Sub
 Function CutterArray()
    
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    Dim sCutterOpt$, sHeading$
    Dim i As Integer
    Dim sNonLatMessage$
@@ -263,7 +271,12 @@ Sub Diacritics(sHeading)
 'removes diacritic marks and other unwanted characters from a string
 
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    Dim i as Integer
 
    i = 1
@@ -311,7 +324,12 @@ End Sub
 Sub CutterManipulation(sHeading)
 
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    Dim sEntryType$
    
    Call Diacritics(sHeading)
@@ -377,54 +395,14 @@ End Sub
 
 '########################################################################
 
-Sub CleanSubjects()
-   Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
-   Dim sTag$
-   Dim nBool
-   Dim n As Integer
-   Dim DelArr(6 to 99) As Integer
-   
-   'strip unwanted MARC tags:
-   'remove subject from unsupported thesauri
-  
-   n = 6
-   nBool = CS.GetFieldLine(n,stag$)
-   Do While nBool = TRUE
-      If Left(sTag$, 1) = "6" Then
-         If InStr("653,654", Mid(sTag$, 1, 3)) <> 0 Then
-            DelArr(n) = n
-            'MsgBox sTag$
-         ElseIf InStr("600,610,611,630,650,651,655", Mid(sTag$, 1, 3)) <> 0 Then
-            If Mid(sTag$,5,1) = "0" Or Mid(sTag$,5,1) = "1" Or InStr(sTag$, Chr(223) & "2 gsafd") _
-               Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
-               Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
-               Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lctgm") _
-               Or InStr(sTag$, Chr(223) & "2 aat") Or InStr(sTag$, Chr(223) & "2 BookOps") Then
-                  'do nothing, go to the next one
-            Else
-               'MsgBox sTag$
-               DelArr(n) = n
-            End If
-         End If
-      End If
-      n = n + 1
-      nBool = CS.GetFieldLine(n,sTag$)
-   Loop
-   
-   For n = 99 to 6 Step -1
-      If DelArr(n) <> 0 Then
-         CS.DeleteFieldLine n
-      End If
-   Next
-
-End Sub
-
-'########################################################################
-
 Sub InsertCallNumber(sField948, sInitials)
    Dim CS as Object
-   Set CS = GetObject(,"Connex.Client")
+   On Error Resume Next
+   Set CS  = GetObject(,"Connex.Client")
+   On Error GoTo 0
+   If CS  Is Nothing Then
+      Set CS  = CreateObject("Connex.Client")
+   End If
    Dim s901$
   
    CS.SetField 1, sField948
