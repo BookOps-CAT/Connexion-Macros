@@ -7,9 +7,10 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: May 6, 2022
+'Last updated: July 15, 2022
 
-
+'v3.0.1 (07-15-2022) changes:
+'  * fixes incorrect recognition of DVDs and labeling them as KIT format
 'v3.0.0 (05-06-2022) changes:
 '  * removes the routine that deletes unsupported subject vocabularies from 6xx fields (moved to CAT!UpdateExport macro)
 '  * ceases removal of "Popular works" subdivision from LCSH
@@ -224,8 +225,8 @@ Sub Main
          dCallNum.sFormat = 5
          MsgBox "Please consider using BPLMusicCD macro instead"
       ElseIf sRecType = "g" And (sTMat = "v" Or sTMat = "m") Then
-         dCallNum.sFormat = 7
-         ' type 6 (movie) or 7 (tv)
+         dCallNum.sFormat = 6
+         ' type 6 (movie) or 6 (tv)
          'sample first 650 if Drama
          CS.GetField "650", 1, s650
          If InStr(s650, "Drama.") <> 0 Or InStr(s650, "Juvenile drama.") <> 0 Then
