@@ -1,7 +1,9 @@
 'MacroName:UpdateExport
 'MacroDescription:Updates OCLC holdings then exports a bibliographic record.
-'Version: 1.5
+'Version: 1.6
 
+'v1.6 (2022-07-19)
+'  * fixes a bug that caused error in records with more than 100 tags
 'v1.5 (2022-05-13)
 '  * permits 69x tags (used at Schomburg, and some special collections)
 'v1.4 (2022-05-06)
@@ -43,7 +45,7 @@ Sub CleanSubjectTags()
    Dim sTag$, lt$, rt$
    Dim nBool
    Dim n, place As Integer
-   Dim DelArr(6 to 99) As Integer
+   Dim DelArr(6 to 199) As Integer
    
    'strip unwanted MARC tags:
    'remove subject from unsupported thesauri
