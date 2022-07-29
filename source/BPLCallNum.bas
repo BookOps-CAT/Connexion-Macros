@@ -7,8 +7,10 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: July 15, 2022
 
+'v3.1.0 (07-29-2022) changes:
+'  * adds record reformating routine before any parsing
+'  * adds a flag if material includes multiple languages, but the call number does not include a language prefix
 'v3.0.1 (07-15-2022) changes:
 '  * fixes incorrect recognition of DVDs and labeling them as KIT format
 'v3.0.0 (05-06-2022) changes:
@@ -55,7 +57,7 @@ Declare Sub SubjectChoice(sSubjectArr)
 Declare Sub Diacritics(sNameTitle)
 Declare Sub LocalDewey(s082,sCallType)
 Declare Sub InsertCallNum(s099,sRecType,sFormItem,sLang,sAudn,f, sInitials)
-Declare Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType,sItemForm, sLitF, sTMat, sLTxt, f, a)
+Declare Sub Conflicts(booLangPrefix, s041, sAudn, sBiog, sCallType, sCutter, sLang, sRecType, sItemForm, sLitF, sTMat, sLTxt, f, a)
 
 
 
@@ -65,8 +67,13 @@ Sub Main
    Set CS  = GetObject(,"Connex.Client")
 
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
-      Dim s099$, s100$, s130$, s300$, s600$, s650$, s655$, s730$, sCallType$, sAudn$, sLang$, sRecType$, sItemForm$, sFormatPrefix$, sAudiencePrefix$, _
+
+      ' make sure all fields are reformated and subfields include required spacing      
+      CS.Reformat
+      
+      Dim s041$, s099$, s100$, s130$, s300$, s600$, s650$, s655$, s730$, sCallType$, sAudn$, sLang$, sRecType$, sItemForm$, sFormatPrefix$, sAudiencePrefix$, _
        sLangPrefix$, sCutterArr$, sDewey$, sLitF$, sBiog$, sTMat$, sLTxt$
+      Dim boolLangPrefix
       Dim iAudn As Integer
       Dim sFormat() As String
       Dim sAudience() As String
@@ -103,6 +110,7 @@ Sub Main
       CS.GetFixedField "LitF", sLitF
       CS.GetFixedField "Biog", sBiog
       CS.GetFixedField "TMat", sTMat
+      CS.GetFieldUnicode "041", 1, s041
       If InStr(s300, Chr(223) & "e") <> 0 Then
          s300 = Mid(s300, InStr(s300, Chr(223) & "e"))
       End If
@@ -272,9 +280,11 @@ Lang:
       'if English material skip, if WL insert appropriate string with language code
       sLang = UCase(sLang)
       If sLang = "ENG" Then
+         boolLangPrefix = False
          Goto AudnType:
       Else
          sLangPrefix = sLang & " " & Chr(223) & "a "
+         boolLangPrefix = True
       End If
 AudnType:     
       If dCallNum.sAudience = 0 Then
@@ -354,7 +364,7 @@ CaseType:
    End If   
 Done:
 
-Call Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType,sItemForm, sLitF, sTMat, sLTxt, f, a)
+Call Conflicts(boolLangPrefix, s041, sAudn, sBiog, sCallType, sCutter, sLang, sRecType,sItemForm, sLitF, sTMat, sLTxt, f, a)
 End Sub
 '##############################################################
 
@@ -1254,11 +1264,12 @@ End Sub
 
 '################################################################################
 
-Sub Conflicts(sAudn, sBiog, sCallType, sCutter, sRecType, sItemForm, sLitF, sTMat, sLTxt, f, a)
+Sub Conflicts(booLangPrefix, s041, sAudn, sBiog, sCallType, sCutter, sLang, sRecType, sItemForm, sLitF, sTMat, sLTxt, f, a)
    Dim CS as Object
    Set CS  = GetObject(,"Connex.Client")
 
    Dim s082$, s338$, s347$, sFields$
+   Dim sTemp$, sLangs$
    'f - numerical code of format
    'a - numerical code of audience
 
@@ -1406,6 +1417,45 @@ FormCheck:
 CutterCheck:
    If InStr("0123456789", sCutter) <> 0 Then
       MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spell out number in the language of the cataloged material."
+   End If
+   
+LangCheck:
+
+   'language prefix validation
+   'check if material is coded be in more then one language
+   
+   If s041 <> "" Then
+   
+      sLangs = UCase(Mid(s041, 6, 3))
+      sTemp = Mid(s041, 6)
+      
+      Do While InStr(sTemp, Chr(223) & "a") <> 0:
+        
+         place = InStr(sTemp, Chr(223) & "a")
+         
+         ' assuming subfields are formated correctly and there is space between subfield and value
+         sValue = UCase(Trim(Mid(sTemp, place + 3, 3)))
+        
+         If Len(sValue) = 3 Then
+            sLangs = sLangs + Chr(9) + sValue
+         End If
+        
+         sTemp = Mid(sTemp, place + 5)
+         
+      Loop
+      
+      If boolLangPrefix = False Then
+ 
+         If sLangs <> "" And InStr(sLangs, sLang) = 0 Then
+         
+            MsgBox "WARNING: language prefix may be missing in the call number. The 041 tag indicates multiple languages present."
+      
+         ElseIf sLangs <> "" And sLang = "ENG" And sLangs <> sLang Then
+         
+            MsgBox "WARNING: language prefix may be missing in the call number. The 041 tag indicates multiple languages present."
+      
+         End If
+      End If
    End If
    
 End Sub

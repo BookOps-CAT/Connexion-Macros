@@ -1,10 +1,15 @@
-'MacroName:NYPL CallNum v.2.8.0
+'MacroName:NYPL CallNum
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
-'Latest update: May 6, 2022
 
+'v3.1.0 (07-29-2022):
+'  * adds reformating routine before any parsing
+'  * fixes incorrect flag for Classics
+'  * adds a flag if material includes multiple languages, but the call number does not include a laguage prefix
+'v3.0.1 (05-13-2022):
+'  * fixes bug that includes subfield "v","t", & "z" in call numbers for biography and dewey+subject
 'v3.0.0 (05-06-2022):
 '  * removes a routine that deletes unsupported subject vocabularies from 6xx fields (moved to CAT!UpdateExport macro)
 'v2.9.0 update datails (04-15-2022):
@@ -62,24 +67,28 @@ Declare Sub ElemArrayChoice(sElemArr, sNameChoice, n600)
 Declare Sub Diacritics(sNameTitle)
 Declare Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
 Declare Sub InsertCallNum(s948, f, sInitials)
-Declare Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s948)
+Declare Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s041, s948, boolLangPrefix)
 
 'temporary variables
 Dim place, i as Integer
 Dim lt$, rt$, sTemp$
 
 Sub Main
+
    Dim CS as Object
    On Error Resume Next
    Set CS  = GetObject(,"Connex.Client")
    On Error GoTo 0
-   If CS  Is Nothing Then
-      Set CS  = CreateObject("Connex.Client")
-   End If
+ 
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
-      Dim s300$, s538$, s948$, sAudn$, sAudnLangPrefix$, sBiog$, sCallType$, sCont$, sCutter$, sElemArr$, _
+
+      ' make sure all fields are reformated and subfields include required spacing
+      CS.Reformat
+   
+      Dim s041$, s300$, s538$, s948$, sAudn$, sAudnLangPrefix$, sBiog$, sCallType$, sCont$, sCutter$, sElemArr$, _
          sFormatPrefix$, sItemForm$, sLang$, sLitF$, sNameChoice$, sRecType$, sTMat$
       Dim bool538
+      Dim boolLangPrefix
       Dim a, f, n100, n600 As Integer
       Dim sFormat() As String
       Dim sAudience() As String
@@ -101,6 +110,7 @@ Sub Main
          CS.GetFixedField "Biog", sBiog
       End If
       CS.GetFieldUnicode "300", 1, s300
+      CS.GetFieldUnicode "041", 1, s041
       If InStr(s300, Chr(223) & "e") <> 0 Then
          s300 = Mid(s300, InStr(s300, Chr(223) & "e"))
       End If
@@ -240,12 +250,17 @@ Sub Main
       If a = 0 Then
          If sLang <> "ENG" Then
             sAudnLangPrefix = Chr(223) & "p J " & sLang & " "
+            boolLangPrefix = True
          Else
             sAudnLangPrefix = Chr(223) & "p J" & " "
+            boolLangPrefix = False
          End If
       Else
          If sLang <> "ENG" Then
             sAudnLangPrefix = Chr(223) & "p " & sLang & " "
+            boolLangPrefix = True
+         Else
+            boolLangPrefix = False
          End If
       End If
       
@@ -349,7 +364,7 @@ Sub Main
    End If
    
 Done:
-   Call Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s948)
+   Call Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s041, s948, boolLangPrefix)
 ReallyDone:
 End Sub
 
@@ -491,9 +506,7 @@ Sub ElemArray(sElemArr, n100, n600)
    On Error Resume Next
    Set CS  = GetObject(,"Connex.Client")
    On Error GoTo 0
-   If CS  Is Nothing Then
-      Set CS  = CreateObject("Connex.Client")
-   End If
+
    Dim sNameTitle$, sIndicator
    Dim sFields() As String
    Dim n, m As Integer
@@ -622,9 +635,7 @@ Function Dewey(a, sCallType)
    On Error Resume Next
    Set CS  = GetObject(,"Connex.Client")
    On Error GoTo 0
-   If CS  Is Nothing Then
-      Set CS  = CreateObject("Connex.Client")
-   End If
+
    Dim s082$, sLastDigit$
    Dim bool082
    Dim x as Integer
@@ -1030,6 +1041,22 @@ Sub Diacritics(sNameTitle)
          sNameTitle = Left(sNameTitle, place-1)
          sNameTitle = RTrim(sNameTitle)
       End If
+      If InStr(sNameTitle, Chr(223) & "t") <> 0 Then
+         place = InStr(sNameTitle, Chr(223) & "t")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "v") <> 0 Then
+         place = InStr(sNameTitle, Chr(223) & "v")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "z") <> 0 Then
+         place = InStr(sNameTitle, Chr(223) & "z")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+
       Do While InStr(sNameTitle, Chr(223))
          place = InStr(sNameTitle, Chr(223))
          lt$ = Left(sNameTitle, place-2)
@@ -1104,8 +1131,11 @@ End Sub
 
 '########################################################################
 
-Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s948)
+Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s041, s948, boolLangPrefix)
    Dim place As Integer
+   Dim sTemp$
+   Dim sLangs$
+   Dim sValue$
    
    'audience related conflicts
    If a = 0 Then
@@ -1140,7 +1170,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
       End If
    ElseIf f = 3 Then
       'format CLASSICS
-      If sRecType <> "i" Then
+      If InStr("gjopr", sRecType) <> 0 Then
          MsgBox "FORMAT conflict: Please check record fixed field coding and selected format."
       End If
    ElseIf f = 5 Then
@@ -1221,6 +1251,44 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
       
       'short stories collections warning flag
    End If
+   
+
+   'language prefix validation
+   'check if material is coded be in more then one language
+   
+   If s041 <> "" Then
+   
+      sLangs = UCase(Mid(s041, 6, 3))
+      sTemp = Mid(s041, 6)
+      
+      Do While InStr(sTemp, Chr(223) & "a") <> 0:
+        
+         place = InStr(sTemp, Chr(223) & "a")
+         
+         ' assuming subfields are formated correctly and there is space between subfield and value
+         sValue = UCase(Trim(Mid(sTemp, place + 3, 3)))
+        
+         If Len(sValue) = 3 Then
+            sLangs = sLangs + Chr(9) + sValue
+         End If
+        
+         sTemp = Mid(sTemp, place + 5)
+         
+      Loop
+      
+      If boolLangPrefix = False Then
+ 
+         If sLangs <> "" And InStr(sLangs, sLang) = 0 Then
+         
+            MsgBox "WARNING: language prefix may be missing in the call number. The 041 tag indicates multiple languages present."
+      
+         ElseIf sLangs <> "" And sLang = "ENG" And sLangs <> sLang Then
+         
+            MsgBox "WARNING: language prefix may be missing in the call number. The 041 tag indicates multiple languages present."
+      
+         End If
+      End If
+   End If
 
 
 End Sub
@@ -1233,9 +1301,7 @@ Sub InsertCallNum(s948, f, sInitials)
    On Error Resume Next
    Set CS  = GetObject(,"Connex.Client")
    On Error GoTo 0
-   If CS  Is Nothing Then
-      Set CS  = CreateObject("Connex.Client")
-   End If
+
    Dim s901$
    Dim nBool
    
