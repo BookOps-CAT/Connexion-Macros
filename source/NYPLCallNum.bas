@@ -4,6 +4,8 @@
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
 
+'v3.1.1 (09-01-2022):
+'  * fixes a bug in cuttering by title when apostrophe is part of skip characters in second indicator of 245 field (example: 245 02 L'Amour)
 'v3.1.0 (07-29-2022):
 '  * adds reformating routine before any parsing
 '  * fixes incorrect flag for Classics
@@ -523,7 +525,6 @@ Sub ElemArray(sElemArr, n100, n600)
       m = 1
       Do While CS.GetFieldUnicode(sFields(n), m, sNameTitle)
          If InStr(sNameTitle, "&#") = 0 Then
-            Call Diacritics(sNameTitle)
             sIndicator = Mid(sNameTitle, 5, 1)
             If n = 0 Then
                n100 = 1
@@ -545,6 +546,7 @@ Sub ElemArray(sElemArr, n100, n600)
                   Goto NextOccurance
                End If
             End If
+            Call Diacritics(sNameTitle)
             sElemArr = sElemArr & sFields(n) & ": " & sNameTitle & Chr(9)
          End If
 NextOccurance:
