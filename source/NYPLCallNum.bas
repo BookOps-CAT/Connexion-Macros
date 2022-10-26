@@ -4,6 +4,8 @@
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
 
+'v3.2.0 (10-25-2022):
+'  * adds bib location command in 949 field with a default BL value ("bn=zzzzz;")
 'v3.1.1 (09-01-2022):
 '  * fixes a bug in cuttering by title when apostrophe is part of skip characters in second indicator of 245 field (example: 245 02 L'Amour)
 'v3.1.0 (07-29-2022):
@@ -1304,7 +1306,7 @@ Sub InsertCallNum(s948, f, sInitials)
    Set CS  = GetObject(,"Connex.Client")
    On Error GoTo 0
 
-   Dim s901$
+   Dim s901$, s949$
    Dim nBool
    
    CS.SetField 1, s948
@@ -1314,23 +1316,25 @@ Sub InsertCallNum(s948, f, sInitials)
    'sFormat codes in variable f
    If f = 1 Then
       'bluray
-      CS.SetField 1, "949  *b2=b;recs=oclcgw;"
+      s949 = "949  *b2=b;"
    ElseIf f = 2 Then
       'audiobook
-      CS.SetField 1, "949  *b2=u;recs=oclcgw;"
+      s949 = "949  *b2=u;"
    ElseIf f = 4 Then
       'dvd
-      CS.SetField 1, "949  *b2=v;recs=oclcgw;"
+      s949 = "949  *b2=v;"
    ElseIf f = 9 Then
       'large-print
-      CS.SetField 1, "949  *b2=l;recs=oclcgw;"
+      s949 = "949  *b2=l;"
    Else
       'print
-      CS.SetField 1, "949  *b2=a;recs=oclcgw;"
+      s949 = "949  *b2=a;"
    End If
+   
+   s949 = s949 & "recs=oclcgw;bn=zzzzz;"
+   CS.SetField 1, s949
 
    s901 = "901  " & sInitials & " " & Chr(223) & "b CATBL"
-
    CS.SetField 1, s901
    
  CS.EndRecord
