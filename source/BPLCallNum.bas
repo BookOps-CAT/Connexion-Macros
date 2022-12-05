@@ -8,6 +8,9 @@
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
 
+
+'v3.2.0 (12-5-2022) changes:
+'  * READALONG format autodetection improvements and removal of flags for READALONG J-E pattern and print bib format
 'v3.1.0 (07-29-2022) changes:
 '  * adds record reformating routine before any parsing
 '  * adds a flag if material includes multiple languages, but the call number does not include a language prefix
@@ -186,7 +189,10 @@ Sub Main
          ' microfilm & microfish
          If sItemForm = "a" Or sItemForm = "b" Then
             dCallNum.sFormat = 10
+         ElseIf InStr(s300, "AUDIO-ENABLED BOOK") <> 0 Or InStr(s300, "AUDIO ENABLED BOOK") <> 0 Or InStr(s300, "WONDERBOOK") <> 0 Then
+            dCallNum.sFormat = 11
          End If
+         
          
          If InStr("1fj", sLitF) <> 0 And sLitF <> "" Then
             If InStr("ab", sAudn) <> 0 and sAudn <> "" Then
@@ -1287,9 +1293,6 @@ AudnCheck:
       Else
          MsgBox "AUDIENCE conflict: Record not coded as eas material (fixed field Audn). Please verify your selection."
       End If
-      If f = 11 Then
-         MsgBox "AUDIENCE conflict: J-E call numbers can not be used for Readalong books. Use the J prefix instead"
-      End If
    Else
       If InStr("cdefgj", sAudn) <> 0 Or sAund = "" Then
          If InStr("cj", sAudn) <> 0 And sAudn <> "" Then
@@ -1384,7 +1387,7 @@ FormCheck:
          MsgBox "FORMAT conflict: bibliographical record type is not for microfilm or mirofiche. Please verify your selection."
       End If
    ElseIf f = 11 Then
-      If sRecType <> "i" Then
+      If InStr("ai", sRecType) = 0  Then
          MsgBox "FORMAT conflict: bibliographical record type is not for audio-enabled books. Please verify your selection."
       End If   
    ElseIf f = 12 Then
