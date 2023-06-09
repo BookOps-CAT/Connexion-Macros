@@ -9,6 +9,10 @@
 'Macro created by: Tomasz Kalata, BookOps
 
 
+'v3.3.0 (02-06-2023) changes:
+'  * removal of flags for 005.258 (programming for specific operating systems), 005.3582 (apps for specific mobile devices),
+'        005.432 (specific operating systems), 005.5 (general purpose programs), 005.7585 & 005.7565 (database management systems),
+'        006.74 (markup languages)
 'v3.2.0 (12-5-2022) changes:
 '  * READALONG format autodetection improvements and removal of flags for READALONG J-E pattern and print bib format
 'v3.1.0 (07-29-2022) changes:
@@ -913,6 +917,7 @@ Sub LocalDewey(s082,sCallType)
       MsgBox "INCOMPLETE: Please correct the cutter. Call number for Shakespeare includes Dewey number, letter and number from Dewey optional table, and picked by cataloger cutter, example: 822.33 S7 G (Hamlet - text, edited by R.Gill). Please do not use cuttering created by the macro."
       Goto Done
    End If
+   
    'specific programming languages
    If sCallType <> "des" Then
       If sClassNum = "005.133" Then
@@ -926,56 +931,10 @@ Sub LocalDewey(s082,sCallType)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of mobile device, example: 004.1675 IPHONE C. Please insert the name of the device before the cutter or run macro again and select Dewey + Subject option."
       End If
    
-      'programing for specific operating system of mobile devices
-      If sClassNum = "005.258" Then
-         s082 = s082 & " " & Chr(223) & "a " & Chr(252)
-         MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of opearing system, example: 005.258 ANDROID K. Please inster the name of operating system before the cutter or run macro again and select Dewey + Subject option."
-      End If
-   
-      'apps for specific operating system of mobile devices
-      If sClassNum = "005.3582" Then
-         s082 = s082 & " " & Chr(223) & "a " & Chr(252)
-         MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of operating system, example: 005.3582 WINDOWS M. Please insert the name of operating system before the cutter or run macro again and select Dewey + Subject option."
-      End If
-   
-      'specific personal computers
-      If sClassNum = "004.165" Then
-         s082 = s082 & " " & Chr(223) & "a " & Chr(252)
-         MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of computer, example: 004.165 IMAC C. Please insert the name of computer before the cutter or run macro again and select Dewey + Subject option."
-      End If
-   
-      'specific operating systems 
-      If sClassNum = "005.432" Then
-         s082 = s082 & " " & Chr(223) & "a " & Chr(252)
-         MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of operating system, example: 005.432 LINUX B. Please insert the name of operating system before the cutter or run macro again and select Dewey + Subject option."
-      End If
-   
       'specific operating systems of personal computers
       If sClassNum = "005.446" Then
          s082 = s082 & " " & Chr(223) & "a " & Chr(252)
          MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of operating system, example: 005.446 VISTA B. Please insert the name of operating system before the cutter or run macro again and select Dewey + Subject option."
-      End If
-   
-      'general purpose programs
-      If s1stFiveDig = "005.5" Then
-         MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of program or software package, example: 005.5 OFFICE B, 005.54 EXCEL C. Please insert the name of program or software package before the cutter or run macro again and select Dewey + Subject option."
-         s082 = s082 & " " & Chr(223) & "a " & Chr(252)
-      End If
-   
-      'database management systems
-      If sClassNum = "005.7585" Then
-         s082 = s082 & " " & Chr(223) & "a " & Chr(252)
-         MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of database, example: 005.7585 ORACLE Z. Please insert the name of database before the cutter or run macro again and select Dewey + Subject option."
-      End If
-      If sClassNum = "005.7565" Then
-         s082 = s082 & " " & Chr(223) & "a " & Chr(252)
-         MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of database, example: 005.7585 ACCESS Z. Please insert the name of database before the cutter or run macro again and select Dewey + Subject option."
-      End If
-      
-      'markup languages
-      If sClassNum = "006.74" Then
-         s082 = s082 & " " & Chr(223) & "a " & Chr(252)
-         MsgBox "INCOMPLETE: Use Dewey option to arrange alphabetically by name of language, example: 006.74 HTML Z. Please insert the name of markup language before the cutter or run macro again and select Dewey + Subject option."
       End If
    End If
    
@@ -1417,6 +1376,7 @@ FormCheck:
          MsgBox "FORMAT conflict: record seems to indicate a different material type than DVD. Please verify your selection."
       End If
    End If
+
 CutterCheck:
    If InStr("0123456789", sCutter) <> 0 Then
       MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spell out number in the language of the cataloged material."
@@ -1638,5 +1598,5 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    CS.SetField 1, s947
    
    CS.EndRecord
-   
+
 End Sub
