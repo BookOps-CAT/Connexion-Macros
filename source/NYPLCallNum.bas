@@ -4,6 +4,8 @@
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
 
+'v3.2.1 (02-06-2023):
+'  * fixes invalid cutters consisting of numbers in print materials and visual non-fic
 'v3.2.0 (10-25-2022):
 '  * adds bib location command in 949 field with a default BL value ("bn=zzzzz;")
 'v3.1.1 (09-01-2022):
@@ -71,7 +73,7 @@ Declare Sub ElemArrayChoice(sElemArr, sNameChoice, n600)
 Declare Sub Diacritics(sNameTitle)
 Declare Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
 Declare Sub InsertCallNum(s948, f, sInitials)
-Declare Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s041, s948, boolLangPrefix)
+Declare Sub Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s041, s948, boolLangPrefix)
 
 'temporary variables
 Dim place, i as Integer
@@ -368,7 +370,7 @@ Sub Main
    End If
    
 Done:
-   Call Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s041, s948, boolLangPrefix)
+   Call Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s041, s948, boolLangPrefix)
 ReallyDone:
 End Sub
 
@@ -1135,7 +1137,7 @@ End Sub
 
 '########################################################################
 
-Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s041, s948, boolLangPrefix)
+Sub Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecType, sTmat, sLitF, sBiog, s041, s948, boolLangPrefix)
    Dim place As Integer
    Dim sTemp$
    Dim sLangs$
@@ -1293,6 +1295,11 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sItemForm, sLang, sRecType, sTmat,
          End If
       End If
    End If
+   
+   'CutterCheck:
+   If InStr("mov,tvs", sCallType) = 0 And InStr("0123456789", Mid(sCutter, 5, 1)) <> 0 Then
+      MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spell out number in the language of the cataloged material."
+   End If 
 
 
 End Sub
