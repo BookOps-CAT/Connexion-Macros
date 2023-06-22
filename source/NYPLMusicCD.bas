@@ -2,8 +2,10 @@
 'MacroDescription:Creates call number for NYPL music CDs ; 
                   'call numbers can be insterted into displayed record or copied into clipboard for pasting into MidWest platform
 'Macro created by: Tomasz Kalata, BookOps
-'Last updated: May 13, 2022
 
+'v1.5 details (06-22-2023):
+'  * adds "zzzzz" bib location code
+'  * adds 910 with BL
 'v1.4 details (05-13-2022):
 '  * removes a routine that cleans up 6xx tags (moved to CAT!UpdateExport macro)
 'v1.3 details (04-05-2021):
@@ -405,10 +407,11 @@ Sub InsertCallNumber(sField948, sInitials)
    End If
    Dim s901$
   
+   CS.SetField 1, "910  BL"
    CS.SetField 1, sField948
    CS.SetField 1, "945  .o"
    CS.SetField 1, "946  m"
-   CS.SetField 1, "949  *b2=y;recs=oclcgw;"
+   CS.SetField 1, "949  *b2=y;recs=oclcgw;bn=zzzzz;"
    s901 = "901  " & sInitials & " " & Chr(223) & "b CATBL"
    CS.SetField 1, s901
 
