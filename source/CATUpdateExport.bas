@@ -1,7 +1,10 @@
 'MacroName:UpdateExport
 'MacroDescription:Updates OCLC holdings then exports a bibliographic record.
-'Version: 1.6
+'Version: 1.7
 
+'v1.7 (2023-06-23)
+'  * fixes a bug causing error in records with more than 200 tags - max set to 400 fields now;
+'  * additionally removes non-supported 6xx tags correctly for in longer bibs 
 'v1.6 (2022-07-19)
 '  * fixes a bug that caused error in records with more than 100 tags
 'v1.5 (2022-05-13)
@@ -45,7 +48,7 @@ Sub CleanSubjectTags()
    Dim sTag$, lt$, rt$
    Dim nBool
    Dim n, place As Integer
-   Dim DelArr(6 to 199) As Integer
+   Dim DelArr(6 to 400) As Integer
    
    'strip unwanted MARC tags:
    'remove subject from unsupported thesauri
@@ -53,7 +56,7 @@ Sub CleanSubjectTags()
    n = 6
    nBool = CS.GetFieldLine(n,sTag$)
    Do While nBool = TRUE
-      'MsgBox sTag$
+      'MsgBox n & ", " & sTag$
       If Left(sTag$, 1) = "6" Then
          If InStr("653", Mid(sTag$, 1, 3)) <> 0 Then
             DelArr(n) = n
@@ -88,7 +91,7 @@ Sub CleanSubjectTags()
       nBool = CS.GetFieldLine(n,sTag$)
    Loop
    
-   For n = 99 to 6 Step -1
+   For n = 400 to 6 Step -1
       If DelArr(n) <> 0 Then
          CS.DeleteFieldLine n
       End If
