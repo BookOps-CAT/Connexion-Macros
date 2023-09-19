@@ -10,6 +10,7 @@
 '                  consecutive order records
 'Macro created by: Tomasz Kalata, BookOps
 '
+'v3.1 details (09-19-2023): relevant LPA codes changed from my to pa
 'v3.0 deails (09-21-2022): added new vendor FRN (Front)
 'v2.0 details (10-18-2021): new vendor JSTIL code added
 'v1.10 details (10-12-2021): Connexion 3.0 suppport
@@ -82,10 +83,10 @@ Sub Main
          sLocation(10) = "MAQ"
          sLocation(11) = "MAR"
          sLocation(12) = "MAU"
-         sLocation(13) = "MYD"
-         sLocation(14) = "MYH"
-         sLocation(15) = "MYM"
-         sLocation(16) = "MYT"
+         sLocation(13) = "PAD"
+         sLocation(14) = "PAH"
+         sLocation(15) = "PAM"
+         sLocation(16) = "PAT"
          sLocation(17) = "SC"
          sLocation(18) = "SLR"
 'ZZZZZZZZZZ
@@ -355,4 +356,3 @@ MenuWindow:
    End If
 Done:
 End Sub
-
