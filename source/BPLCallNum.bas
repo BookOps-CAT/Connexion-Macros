@@ -6,9 +6,13 @@
 '                  improved behavior for computer science call numbers,
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials 
-'Macro created by: Tomasz Kalata, BookOps
 
-
+'v3.4.0 (10-13-2023) changes:
+'  * Dewey call numbers stop at 4 digits after the period except 8xx across all formats
+'  * removes Dewey + Subject pattern in all Dewey ranges except 8xx (raises flag about invalid call number)
+'  * adds option for READALONGS to have J FIC or J-E call numbers
+'  * fixes bug in the READALONGS format to set correctly a bib format code to 8
+'  * fixes a bug in non-DVD cutters that consist of a digit
 'v3.3.0 (02-06-2023) changes:
 '  * removal of flags for 005.258 (programming for specific operating systems), 005.3582 (apps for specific mobile devices),
 '        005.432 (specific operating systems), 005.5 (general purpose programs), 005.7585 & 005.7565 (database management systems),
@@ -55,7 +59,6 @@
 '  *improved and simplified diactriticts function
 
 
-
 Declare Function Dewey(sAudn,sCallType)
 Declare Function FileDlgFunction(identifier$, action, suppvalue)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
@@ -63,9 +66,10 @@ Declare Sub CutterArray(sCutterArr,sCallType,sDewey)
 Declare Sub SubjectChoice(sSubjectArr)
 Declare Sub Diacritics(sNameTitle)
 Declare Sub LocalDewey(s082,sCallType)
-Declare Sub InsertCallNum(s099,sRecType,sFormItem,sLang,sAudn,f, sInitials)
+Declare Sub Insert006and007(sAudn,sFormItem,sRecType)
+Declare Sub InsertLocalTags(f,s099,sFormItem,sRecType,sInitials)
 Declare Sub Conflicts(booLangPrefix, s041, sAudn, sBiog, sCallType, sCutter, sLang, sRecType, sItemForm, sLitF, sTMat, sLTxt, f, a)
-
+Declare Sub RemoveEbookIsbns
 
 
 Sub Main
@@ -364,9 +368,17 @@ CaseType:
          Print #filenumber, sInitials
          Close #filenumber
          
-         'insert call number
-         s099 = s099 & sCutter
-         Call InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f, sInitials)
+         'populate 006 and 007 for BOOK & CDs
+         If f = 2 Then
+            Call Insert006and007(sAudn,sItemForm,sRecType)
+         End If
+         
+         'cleanup ISBNs
+         Call RemoveEbookIsbns
+         
+         'insert local fields: call number 9xx
+         s099 = s099 & sCutter         
+         Call InsertLocalTags(f,s099,sItemForm,sRecType,sInitials)
       End If
    Else
       MsgBox "INFO: A bibliographic record must be displayed in order to use this macro."
@@ -446,6 +458,11 @@ Function Dewey(sAudn,sCallType)
          End If
       Loop
       Call LocalDewey(s082,sCallType)
+      
+   ElseIf Left(s082,1) = "8" Then
+      
+      MsgBox "exception"
+      
    Else
       s082 = Mid(s082,6,20)
       Call LocalDewey(s082,sCallType)
@@ -1239,8 +1256,10 @@ Sub Conflicts(booLangPrefix, s041, sAudn, sBiog, sCallType, sCutter, sLang, sRec
    'a - numerical code of audience
 
    bool082 = CS.GetField("082", 1, s082)
+
 AudnCheck:
    If sCallType = "eas" Then
+
       If InStr("ab", sAudn) <> 0 And sAudn <> "" Then
          If bool082 = TRUE Then
             If InStr(s082, "[FIC]") <> 0 Then
@@ -1250,34 +1269,48 @@ AudnCheck:
       ElseIf sAudn = "j" Then
          MsgBox "INFO: Caution advised. Record coded as broad juvenile material (fixed field Audn: j)."
       Else
-         MsgBox "AUDIENCE conflict: Record not coded as eas material (fixed field Audn). Please verify your selection."
+         MsgBox "AUDIENCE conflict: Record not coded as easy material (fixed field Audn). Please verify your selection."
       End If
+
    Else
-      If InStr("cdefgj", sAudn) <> 0 Or sAund = "" Then
+
+      If InStr("cdefgj", sAudn) <> 0 Then
+      'implicit: empty sAudn will evaluate to 1
+
          If InStr("cj", sAudn) <> 0 And sAudn <> "" Then
+         
             If a = 0 Then
+            
                If InStr(s082, "[E]") <> 0 And f <> 11 Then
-                  MsgBox "AUDIENCE conflict: The material is classed as eas fiction (082 field - [E]). Please verify your selection."
+                  MsgBox "AUDIENCE conflict: The material is classed as easy fiction (082 field - [E]). Please verify your selection."
                Else
                   Goto LitCheck
                End If
+ 
             Else
                MsgBox "AUDIENCE conflict: Record coded as juvenile material (fixed field Audn). Please verify your selection."
             End If
+ 
          Else
+         
             If a = 1 Then
-               Goto LitCheck
+               If f <> 11 Then
+                  Goto LitCheck
+               Else
+                  MsgBox "AUDIENCE conflict: Readalong books are intended for juvenile readers and call number must include J or J-E prefix."
+               End if
             Else
                MsgBox "AUDIENCE conflict: Record not coded as adult/young adult material (fixed field Audn). Please verify your selection."
             End If
+
          End If
+
       Else
          MsgBox "AUDIENCE conflict: Record coded as material for young readers, age 0-8 (fixed field Audn-a,b). Please consider using J-E call number."
       End If
-      If a = 1 and f = 11 Then
-         MsgBox "AUDIENCE conflict: Readalong books are intended for juvenile readers and call number must include J prefix."
-      End If
+
    End If
+
 LitCheck:
    If sRecType = "a" Then
       If sCallType = "fic" Then
@@ -1425,178 +1458,211 @@ End Sub
 
 '########################################################################
 
-Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
+Sub Insert006and007(sAudn,sItemForm,sRecType)
 
    Dim CS as Object
-   Set CS  = GetObject(,"Connex.Client")
+   Set CS = GetObject(,"Connex.Client")
 
-   Dim s949$, sCD, sDVD, sIndcator$, sOverlay$, sLargePrint$, SierraCode$, s007$, s006$
+   Dim sIndcator$, s007$, s006$
    Dim n as Integer
-
-   CS.SetField 1, s099
-   
-   s949 = "949  *"
-   sOverlay = "recs=b;ov=."
-   sLargePrint = "b2=l;"
-   sDVD = "b2=h;"
-   sCD = "b2=i;"
-   
-   If sRecType = "a" Then
-      If sItemForm = "d" Then
-         MsgBox "INFO: Large print record. Setting Sierra format code to large print."
-         SierraCode = s949 & sLargePrint & sOverlay 
-      Else
-         SierraCode = s949 & sOverlay
-      End If
-   ElseIf sRecType = "g" Then
-      SierraCode = s949 & sDVD & sOverlay
-   ElseIf sRecType = "i" Then
-      SierraCode = s949 & sCD & sOverlay
-   End If
-   
-   CS.SetField 1, SierraCode
    
    'BOOK & CD call numbers lacking 007 or 006
-   If f = 2 Then
-      bool007 = CS.GetField("007", 1, s007)
-      If bool007 <> TRUE Then
-         'creates 007 field with default values for audio CD
-         s007 = "007  s " & Chr(223) & "b d " & Chr(223) & "d f " & Chr(223) & "e u " & Chr(223) & "f n " & Chr(223) & "g g " & Chr(223) & "h n " & Chr(223) & "i n " & Chr(223) & "k m " & Chr(223) & "m e " & Chr(223) & "n d"
-         bool = CS.SetField(1, s007)
-      End If
-      bool006 = CS.GetField("006", 1, s006)
-      If bool006 <> TRUE Then
-         If Len(sAudn) = 0 Then
-            sAudn = " "
-         End If
-         If sRecType = "a" Then
-            Begin Dialog TypeChoices 170, 80, "Choose type of sound recording"
-            OptionGroup .Choice
-            OptionButton  24,  10, 140, 14, "&non-musical sound recording"
-            OptionButton  24,  28, 140, 14, "&musical sound recording"
-            OkButton        24, 50,  54, 16
-            CancelButton   100, 50,  54, 16
-            End Dialog
-            Dim CaseOptions as TypeChoices
-            On Error Resume Next
-            Dialog CaseOptions 
-            If Err = 102 Then Exit Sub
-            Select Case CaseOptions.Choice
-               Case 0
-                  SoundRecType$ = "i"
-               Case 1
-                  SoundRecType$ = "j"
-            End Select
-            If SoundRecType$ = "i" Then
-               Begin Dialog LTxtChoices 170, 325, "Choose type of literary text"
-               OptionGroup .Choice
-               OptionButton  24,  10, 140, 14, "&Autobiography"
-               OptionButton  24,  28, 140, 14, "&Biography"
-               OptionButton  24,  46, 140, 14, "&Drama"
-               OptionButton  24,  64, 140, 14, "&Essays"
-               OptionButton  24,  82, 140, 14, "&Fiction"
-               OptionButton  24,  100, 140, 14, "&History"
-               OptionButton  24,  118, 140, 14, "&Instruction (How to...)"
-               OptionButton  24,  136, 140, 14, "&Language instruction"
-               OptionButton  24,  154, 140, 14, "&Comedy"
-               OptionButton  24,  172, 140, 14, "&Lectures, speaches"
-               OptionButton  24,  190, 140, 14, "&Memoirs"
-               OptionButton  24,  208, 140, 14, "&Folktales"
-               OptionButton  24,  226, 140, 14, "&Poetry"
-               OptionButton  24,  244, 140, 14, "&Sounds"
-               OptionButton  24,  262, 140, 14, "&Interviews"
-               OptionButton  24,  280, 140, 14, "&Other"
-               OkButton        24, 300,  54, 16
-               CancelButton   100, 300,  54, 16
-               End Dialog
-               Dim LTxtOptions as LTxtChoices
-               On Error Resume Next
-               Dialog LTxtOptions 
-               If Err = 102 Then Exit Sub
-               Select Case LTxtOptions.Choice
-                  Case 0
-                     LTxt$ = "a "
-                  Case 1
-                     LTxt$ = "b "
-                  Case 2
-                     LTxt$ = "dl"
-                  Case 3
-                     LTxt$ = "ez "
-                  Case 4
-                     LTxt$ = "f "
-                  Case 5
-                     LTxt$ = "h "
-                  Case 6
-                     LTxt$ = "i "
-                  Case 7
-                     LTxt$ = "j "
-                  Case 8
-                     LTxt$ = "k "
-                  Case 9
-                     LTxt$ = "l "
-                  Case 10
-                     LTxt$ = "m "
-                  Case 11
-                     LTxt$ = "o "
-                  Case 12
-                     LTxt$ = "p "
-                  Case 13
-                     LTxt$ = "s "
-                  Case 14
-                     LTxt$ = "tm"
-                  Case 15
-                     LTxt$ = "z "
-               End Select
-               s006 = "006  " & SoundRecType$ & "nnnn" & sAudn & "       " & LTxt$ &  " n "  
-            ElseIf srec_type$ = "j" Then
-               s006 = "006  " & SoundRecType$ & Chr(252) & Chr(252) & "nn" & sAudn & "          n "
-            End If        
-         ElseIf sRecType = "i" or sRecType = "j" Then
-            bool = CS.GetFixedField("LTxt", sLTxt$)
-            If InStr("a ,b , c ,gt, h ,i , j ,l ,m ,o ,kr,s ,tm,z ", sLTxt$) <> 0 Then
-               form$ = "0"
-            ElseIf sLTxt$ = "a " Or sLTxt$ = "m " Then
-               bio$ = "a"
-            ElseIf sLTxt$ = "b " Then
-               bio$ = "b"
-            ElseIf InStr("d ,ez,f ,p ", sLTxt$) <> 0 Then
-               form$ = Left(sLTxt$, 1)
-               bio$ = " " 
-            Else
-               bio$ = " "
-               form$ = "0"
-            End If
-            s006 = "006  a    " & sAudn & "      000 " & form$ & bio$
-         Else
-            MsgBox "Type of bibliographic record not supported. Report to Tomasz immediately"
-         End If
-         bool = CS.SetField(1, s006)
-      End If
+   bool007 = CS.GetField("007", 1, s007)
+   If bool007 <> TRUE Then
+      'creates 007 field with default values for audio CD
+      s007 = "007  s " & Chr(223) & "b d " & Chr(223) & "d f " & Chr(223) & "e u " & Chr(223) & "f n " & Chr(223) & "g g " & Chr(223) & "h n " & Chr(223) & "i n " & Chr(223) & "k m " & Chr(223) & "m e " & Chr(223) & "n d"
+      bool = CS.SetField(1, s007)
    End If
+      
+   bool006 = CS.GetField("006", 1, s006)
+   If bool006 <> TRUE Then
+      If Len(sAudn) = 0 Then
+         sAudn = " "
+      End If
+      If sRecType = "a" Then
+         Begin Dialog TypeChoices 170, 80, "Choose type of sound recording"
+         OptionGroup .Choice
+         OptionButton  24,  10, 140, 14, "&non-musical sound recording"
+         OptionButton  24,  28, 140, 14, "&musical sound recording"
+         OkButton        24, 50,  54, 16
+         CancelButton   100, 50,  54, 16
+         End Dialog
+         
+         Dim CaseOptions as TypeChoices
+         On Error Resume Next
+         Dialog CaseOptions 
+         If Err = 102 Then Exit Sub
+         
+         Select Case CaseOptions.Choice
+            Case 0
+               SoundRecType$ = "i"
+            Case 1
+               SoundRecType$ = "j"
+         End Select
+         
+         If SoundRecType$ = "i" Then
+            Begin Dialog LTxtChoices 170, 325, "Choose type of literary text"
+            OptionGroup .Choice
+            OptionButton  24,  10, 140, 14, "&Autobiography"
+            OptionButton  24,  28, 140, 14, "&Biography"
+            OptionButton  24,  46, 140, 14, "&Drama"
+            OptionButton  24,  64, 140, 14, "&Essays"
+            OptionButton  24,  82, 140, 14, "&Fiction"
+            OptionButton  24,  100, 140, 14, "&History"
+            OptionButton  24,  118, 140, 14, "&Instruction (How to...)"
+            OptionButton  24,  136, 140, 14, "&Language instruction"
+            OptionButton  24,  154, 140, 14, "&Comedy"
+            OptionButton  24,  172, 140, 14, "&Lectures, speaches"
+            OptionButton  24,  190, 140, 14, "&Memoirs"
+            OptionButton  24,  208, 140, 14, "&Folktales"
+            OptionButton  24,  226, 140, 14, "&Poetry"
+            OptionButton  24,  244, 140, 14, "&Sounds"
+            OptionButton  24,  262, 140, 14, "&Interviews"
+            OptionButton  24,  280, 140, 14, "&Other"
+            OkButton        24, 300,  54, 16
+            CancelButton   100, 300,  54, 16
+            End Dialog
+            
+            Dim LTxtOptions as LTxtChoices
+            On Error Resume Next
+            
+            Dialog LTxtOptions 
+            If Err = 102 Then Exit Sub
+            
+            Select Case LTxtOptions.Choice
+               Case 0
+                  LTxt$ = "a "
+               Case 1
+                  LTxt$ = "b "
+               Case 2
+                  LTxt$ = "dl"
+               Case 3
+                  LTxt$ = "ez "
+               Case 4
+                  LTxt$ = "f "
+               Case 5
+                  LTxt$ = "h "
+               Case 6
+                  LTxt$ = "i "
+               Case 7
+                  LTxt$ = "j "
+               Case 8
+                  LTxt$ = "k "
+               Case 9
+                  LTxt$ = "l "
+               Case 10
+                  LTxt$ = "m "
+               Case 11
+                  LTxt$ = "o "
+               Case 12
+                  LTxt$ = "p "
+               Case 13
+                  LTxt$ = "s "
+               Case 14
+                  LTxt$ = "tm"
+               Case 15
+                  LTxt$ = "z "
+            End Select
+            
+            s006 = "006  " & SoundRecType$ & "nnnn" & sAudn & "       " & LTxt$ &  " n "  
+            
+         ElseIf sRecType = "j" Then
+            s006 = "006  " & SoundRecType$ & Chr(252) & Chr(252) & "nn" & sAudn & "          n "
+         End If
+       
+      ElseIf sRecType = "i" or sRecType = "j" Then
+         bool = CS.GetFixedField("LTxt", sLTxt$)
+         If InStr("a ,b , c ,gt, h ,i , j ,l ,m ,o ,kr,s ,tm,z ", sLTxt$) <> 0 Then
+            form$ = "0"
+         ElseIf sLTxt$ = "a " Or sLTxt$ = "m " Then
+            bio$ = "a"
+         ElseIf sLTxt$ = "b " Then
+            bio$ = "b"
+         ElseIf InStr("d ,ez,f ,p ", sLTxt$) <> 0 Then
+            form$ = Left(sLTxt$, 1)
+            bio$ = " " 
+         Else
+            bio$ = " "
+            form$ = "0"
+         End If
+         s006 = "006  a    " & sAudn & "      000 " & form$ & bio$
+      
+      Else
+            MsgBox "Type of bibliographic record not supported. Report to Tomasz immediately"
+      End If
+      bool = CS.SetField(1, s006)
+   End If
+
+End Sub
+
+
+Sub RemoveEbookIsbns
+
+   Dim CS as Object
+   Dim isbn$
+   Dim n as Integer
    
-   If sItemForm <> "o" Then
-      n = 1
-      nBool = CS.GetField("020", n, isbn$)
-      Do While nBool = TRUE
-         isbn$ = LCase(isbn$)
-         If InStr(isbn$, "ebk") <> 0 Or InStr(isbn$, "ebook") <> 0 Or InStr(isbn$, "electronic") <> 0 _ 
+   Set CS  = GetObject(,"Connex.Client")
+
+   n = 1
+   nBool = CS.GetField("020", n, isbn$)
+   Do While nBool = TRUE
+      isbn$ = LCase(isbn$)
+      If InStr(isbn$, "ebk") <> 0 Or InStr(isbn$, "ebook") <> 0 Or InStr(isbn$, "electronic") <> 0 _ 
           Or InStr(isbn$, "e-book") <> 0 Or InStr(isbn$, "e-isbn") <> 0 Or InStr(isbn$, "e-mhid") <> 0 _ 
           Or InStr(isbn$, "pdf") <> 0 Or InStr(isbn$, "epub") <> 0 Or InStr(isbn$, "e-mobi") <> 0 _
           Or InStr(isbn$, "html") <> 0 Or InStr(isbn$, "mobil") <> 0 Or InStr(isbn$, "el.") <> 0 Then
             'remove apostrophe in the beginning of the line below to display deleted isbns
             'MsgBox isbn$
-            CS.DeleteField "020", n
-         Else
-            n = n + 1 
-         End If
-         nBool = CS.GetField("020", n, isbn$)
-      Loop 
-   End If
+         CS.DeleteField "020", n
+      Else
+         n = n + 1 
+      End If
+      nBool = CS.GetField("020", n, isbn$)
+   Loop 
    
+End Sub
+
+Sub InsertLocalTags(f,s099,sItemForm,sRecType,sInitials)
+
+   Dim CS as Object
+   Dim s947$, s949$, sOverlay$
+   
+   Set CS  = GetObject(,"Connex.Client")
+   
+   'add call number 099
+   CS.SetField 1, s099
+
    'add field with initials
    s947 = "947  " & sInitials
    CS.SetField 1, s947
    
+   'construct command field to set bib format, use bib template and provide stub for bib overlay
+   s949 = "949  *"
+   sOverlay = "recs=b;ov=."
+   If f = 11 Then
+      'readalong
+      s949 = s949 & "b2=8;" & sOverlay
+   ElseIf sRecType = "a" Then
+      If sItemForm = "d" Then
+         'large print
+         MsgBox "INFO: Large print record. Setting Sierra format code to large print."
+         s949 = s949 & "b2=l;" & sOverlay 
+      Else
+         s949 = s949 & sOverlay
+      End If
+   ElseIf sRecType = "g" Then
+      'DVD
+      s949 = s949 & "b2=h;" & sOverlay
+   ElseIf sRecType = "i" Then
+      'CD
+      s949 = s949 & "b2=i;" & sOverlay
+   End If   
+
+   'add constructed command field to the bib
+   CS.SetField 1, s949
+
    CS.EndRecord
+
 
 End Sub

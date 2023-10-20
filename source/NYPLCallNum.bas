@@ -4,6 +4,10 @@
 '                  incorporates functions of Format macro - populates subfield $f 
 'Macro created by: Tomasz Kalata, BookOps
 
+
+'v3.3.0 (09-25-2023):
+'  * adds correct bib format code 8 to READALONGS
+'  * 
 'v3.2.1 (02-06-2023):
 '  * fixes invalid cutters consisting of numbers in print materials and visual non-fic
 'v3.2.0 (10-25-2022):
@@ -1333,6 +1337,9 @@ Sub InsertCallNum(s948, f, sInitials)
    ElseIf f = 9 Then
       'large-print
       s949 = "949  *b2=l;"
+   ElseIf f = 11 Then
+      'readalong
+      s949 = "949  *b2=5;"
    Else
       'print
       s949 = "949  *b2=a;"
@@ -1344,5 +1351,5 @@ Sub InsertCallNum(s948, f, sInitials)
    s901 = "901  " & sInitials & " " & Chr(223) & "b CATBL"
    CS.SetField 1, s901
    
- CS.EndRecord
+  CS.EndRecord
 End Sub
