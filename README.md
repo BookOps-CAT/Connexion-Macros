@@ -9,11 +9,8 @@ By default library computers hide the `AppData` directory. If you do not see `Ap
 1. Open the Windows Folder Explorer application
 2. Navigate to your profile folder: `C:/Users/[your-username]`
 3. Go to the `View` tab in the toolbar
-4. Click on the Options button in the top right corner of the window
-5. In the pop-up `Folder Options` window select the `View` tab
-6. In the `Advanced settings box` select the `Show hidden files, folders, and drives` radiobutton
-7. Confirm with the `Ok` button
-8. Verify `C:\Users\[your-username]\AppData` folder is displayed
+4. Select `Hidden items` option
+5. Verify `AppData` is visible now
 
 ![folder-options](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/media/folder-options.png)
 
