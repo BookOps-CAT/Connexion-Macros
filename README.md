@@ -1,5 +1,5 @@
 # BookOps Cataloging Dept. Connexion Macros
-A repository of the BookOps cataloging department Macros for OCLC Connexion client.
+A repository of BookOps Cataloging Department macros for the OCLC Connexion client.
 
 ## Installation
 ### Easy Way
