@@ -18,7 +18,6 @@ By default library computers hide the `AppData` directory. If you do not see `Ap
 ![folder-options](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/media/folder-options.png)
 ![reveal-folder](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/media/reveal.png)
 
-Simple as that!
 ### Hard Way (Copy and Paste from Source)
 Alternatively, copy the code for the individual macro directly from the .BAS file (/source directory) using the macro editor in Connexion.
 
