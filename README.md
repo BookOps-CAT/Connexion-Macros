@@ -6,7 +6,7 @@ A repository of BookOps Cataloging Department macros for the OCLC Connexion clie
 To install, copy the macro book (.mbk file in /macrobooks folder) to the `C:/Users/[your-username]/AppData/Roaming/OCLC/Connex/Macros/` directory.
 
 By default library computers hide the `AppData` directory. If you do not see `AppData` folder in your profile directory, follow the instruction below:
-1. Open the Windows Folder Explorer applicaition
+1. Open the Windows Folder Explorer application
 2. Navigate to your profile folder: `C:/Users/[your-username]`
 3. Go to the `View` tab in the toolbar
 4. Click on the Options button in the top right corner of the window
