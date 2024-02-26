@@ -3,7 +3,20 @@ A repository of the BookOps cataloging department Macros for OCLC Connexion clie
 
 ## Installation
 ### Easy Way
-To install, copy the macro book (.mbk file in /macrobooks folder) to the "C:/Users/[your-username]/AppData/Roaming/OCLC/Connex/Macros/" directory.
+To install, copy the macro book (.mbk file in /macrobooks folder) to the `C:/Users/[your-username]/AppData/Roaming/OCLC/Connex/Macros/` directory.
+
+By default library computers hide the `AppData` directory. If you do not see `AppData` folder in your profile directory, follow the instruction below:
+1. Open the Windows Folder Explorer applicaition
+2. Navigate to your profile folder: `C:/Users/[your-username]`
+3. Go to the `View` tab in the toolbar
+4. Click on the Options button in the top right corner of the window
+5. In the pop-up `Folder Options` window select the `View` tab
+6. In the `Advanced settings box` select the `Show hidden files, folders, and drives` radiobutton
+7. Confirm with the `Ok` button
+8. Verify `C:\Users\[your-username]\AppData` folder is displayed
+
+![folder-options](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/media/folder-options.png)
+![reveal-folder](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/media/reveal.png)
 
 Simple as that!
 ### Hard Way (Copy and Paste from Source)
@@ -24,24 +37,24 @@ Alternatively, copy the code for the individual macro directly from the .BAS fil
 Done!
 
 ## Macros
-1. Bookops.mbk macrobook
-	* [Utilities.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/Utilities.bas)
-2. Brooklyn.mbk macrobook
-	* [BPLCallNum.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/BPLCallNum.bas)
-	* [ToExcel.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/BPLToExcel.bas)
-3. NYPL.mbk macrobook
-	* [NYPLCallNum.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/NYPLCallNum.bas)
-	* [NYPLMusicCD.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/NYPLMusicCD.bas)
-4. CAT.mbk macrobook
-	* [BackupSettings.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATBackupSettings.bas)
-	* [CATBibcoEval.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATBibcoEval.bas)
-	* [UpdateExport.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATUpdateExport.bas)
-    * [CATShareSave.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATShareSave.bas)
-    * [CATUserDual.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATNewUserDual.bas)
+1. [Bookops.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/macrobooks/Bookops.mbk)
+	* [Utilities.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/Utilities.bas)
+2. [Brooklyn.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/macrobooks/Brooklyn.mbk)
+	* [BPLCallNum.bas v3.4.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/BPLCallNum.bas)
+	* [ToExcel.bas v1.2](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/BPLToExcel.bas)
+3. [NYPL.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/macrobooks/NYPL.mbk)
+	* [NYPLCallNum.bas v3.2.1](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/NYPLCallNum.bas)
+	* [NYPLMusicCD.bas v1.5](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/NYPLMusicCD.bas)
+4. [CAT.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/macrobooks/CAT.mbk)
+	* [BackupSettings.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATBackupSettings.bas)
+	* [CATBibcoEval.bas v1.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATBibcoEval.bas)
+	* [UpdateExport.bas v1.7](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATUpdateExport.bas)
+    * [CATShareSave.bas v1.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATShareSave.bas)
+    * [CATUserDual.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATNewUserDual.bas)
     * [CATUserNYP.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/CATNewUserNYP.bas)
-5. ACQ.mbk macrobook
-	* [RLOrderRec.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/ACQRLOrderRec.bas)
-6. NewMacros.mbk macrobook
-	* [updater.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/newMacrosUpdater.bas)
+5. [ACQ.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/macrobooks/ACQ.mbk)
+	* [RLOrderRec.bas v3.2](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/ACQRLOrderRec.bas)
+6. [NewMacros.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/macrobooks/newMacros.mbk)
+	* [updater.bas v2.1](https://github.com/BookOps-CAT/Connexion-Macros/blob/master/source/newMacrosUpdater.bas)
 ## License
 [MIT](https://opensource.org/licenses/MIT)
