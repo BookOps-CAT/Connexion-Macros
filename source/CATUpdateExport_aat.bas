@@ -5,16 +5,16 @@
 '.v1.8 aat (2024-06-23)
 '   * fixes list of approved thesauri to include aat and removes temp patch for short stories
 'v1.7 (2023-06-23)
-'  * fixes a bug causing error in records with more than 200 tags - max set to 400 fields now;
-'  * additionally removes non-supported 6xx tags correctly for in longer bibs 
+'  * fixes a bug causing an error in records with more than 200 tags - max set to 400 fields now;
+'  * additionally removes non-supported 6xx tags correctly for instances in longer bibs 
 'v1.6 (2022-07-19)
 '  * fixes a bug that caused error in records with more than 100 tags
 'v1.5 (2022-05-13)
 '  * permits 69x tags (used at Schomburg, and some special collections)
 'v1.4 (2022-05-06)
-'  * adds removal of unspported subject vocabularies from 6xx tags; permits only BIDEX, BOOKOPS, FAST, GSAFD, HOMOIT, LCGFT, and LCSH
+'  * adds removal of unsupported subject vocabularies from 6xx tags; permits only BIDEX, FAST, GSAFD, HOMOIT, LCGFT, and LCSH
 'v1.3 (2018-07-02)
-'  * added general fiction short stories warning messaged
+'  * added general fiction short stories warning message
 'v1.2 (2018-02-09)
 '  * added enforcement of oclcgw load table for NYPL records
 
