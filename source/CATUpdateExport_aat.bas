@@ -3,7 +3,7 @@
 'Version: 1.8
 
 '.v1.8 aat (2024-06-23)
-'   * fixes list of approved thesauri to include aat 
+'   * fixes list of approved thesauri to include aat and removes temp patch for short stories
 'v1.7 (2023-06-23)
 '  * fixes a bug causing error in records with more than 200 tags - max set to 400 fields now;
 '  * additionally removes non-supported 6xx tags correctly for in longer bibs 
@@ -183,13 +183,6 @@ Sub Main
          
             If fieldMissing Then
                CS.AddField 1, "949  *" + sPreferedLoadTable
-            End If
-         
-            ' temporary patch for general fiction short stories collections
-            CS.GetField "948", 1, sValue
-            If InStr(sValue, "808.831") <> 0 Then
-               Msgbox "Effective July 1 2018, NYPL has ceased to use '808.831' for general collections of short stories. Use the 'FIC' call number instead. Your record has not been exported."
-               GoTo Done
             End If
       
       End If
