@@ -72,23 +72,24 @@ Sub CleanSubjectTags()
             If Mid(sTag$,5,1) = "0" Then
                'do nothing
                'MsgBox "Keep LCSH: " & sTag$ 
-            ' other dictionaries
+            ' other dictionaries to include aat, estc, gmgpc, lobt, migfg, mim, rbbin, rbgenr, rbmscv, rbpap, rbpri, rbprov, rbpub, rbtyp, rda, rdafmn, rdafnm 
             ElseIf Mid(sTag$,5,1) = "7" Then
                If InStr(sTag$, Chr(223) & "2 gsafd") _
                   Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
                   Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
-                  Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 aat") _
-                  Or InStr(sTag$, Chr(223) & "2 estc") Or InStr(sTag$, Chr(223) & "2 homoit") _
-                  Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lobt") _
-                  Or InStr(sTag$, Chr(223) & "2 migfg") Or InStr(sTag$, Chr(223) & "2 mim") _
-                  Or InStr(sTag$, Chr(223) & "2 rbbin") Or InStr(sTag$, Chr(223) & "2 rbgenr") _
-                  Or InStr(sTag$, Chr(223) & "2 rbmscv") Or InStr(sTag$, Chr(223) & "2 rbpap") _
-                  Or InStr(sTag$, Chr(223) & "2 rbpri") Or InStr(sTag$, Chr(223) & "2 rbprov") _
-                  Or InStr(sTag$, Chr(223) & "2 rbpub") Or InStr(sTag$, Chr(223) & "2 rbtyp") _
-                  Or InStr(sTag$, Chr(223) & "2 estc") Or InStr(sTag$, Chr(223) & "2 rdafmn") _
-                  Or InStr(sTag$, Chr(223) & "2 rdafnm") Then
+                  Or InStr(sTag$, Chr(223) & "2 homoit") Or InStr(sTag$, Chr(223) & "2 aat") _
+                  Or InStr(sTag$, Chr(223) & "2 estc") Or InStr(sTag$, Chr(223) & "2 gmgpc") _
+                  Or InStr(sTag$, Chr(223) & "2 lobt") Or InStr(sTag$, Chr(223) & "2 migfg") _ 
+                  Or InStr(sTag$, Chr(223) & "2 mim") Or InStr(sTag$, Chr(223) & "2 rbbin") _
+                  Or InStr(sTag$, Chr(223) & "2 rbgenr") Or InStr(sTag$, Chr(223) & "2 rbmscv") _
+                  Or InStr(sTag$, Chr(223) & "2 rbpap") Or InStr(sTag$, Chr(223) & "2 rbpri") _
+                  Or InStr(sTag$, Chr(223) & "2 rbprov") Or InStr(sTag$, Chr(223) & "2 rbpub") _
+                  Or InStr(sTag$, Chr(223) & "2 rbtyp") Or InStr(sTag$, Chr(223) & "2 rda") _
+                  Or InStr(sTag$, Chr(223) & "2 rdafmn") Or InStr(sTag$, Chr(223) & "2 rdafnm") Then
+                  
                      'MsgBox "Keep list: " & sTag$
                      'do nothing, go to the next one
+
                Else
                   'MsgBox "DEL not on list: " & sTag$
                   DelArr(n) = n
