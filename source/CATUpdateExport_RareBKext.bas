@@ -1,7 +1,8 @@
 'MacroName:UpdateExport
 'MacroDescription:Updates OCLC holdings then exports a bibliographic record.
 'Version: 1.8
-
+'v1.9 RareBKext (2024-03-20)
+'   * expands list of approved thesauri to include other rare book vocabularies
 '.v1.8 aat (2024-06-23)
 '   * fixes list of approved thesauri to include aat and removes temp patch for short stories
 'v1.7 (2023-06-23)
@@ -77,7 +78,16 @@ Sub CleanSubjectTags()
                   Or InStr(sTag$, Chr(223) & "2 fast") Or InStr(sTag$, Chr(223) & "2 lcsh") _
                   Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 lcgft") _
                   Or InStr(sTag$, Chr(223) & "2 bidex") Or InStr(sTag$, Chr(223) & "2 aat") _
-                  Or InStr(sTag$, Chr(223) & "2 homoit") Then
+                  Or InStr(sTag$, Chr(223) & "2 estc") Or InStr(sTag$, Chr(223) & "2 homoit") _
+                  Or InStr(sTag$, Chr(223) & "2 gmgpc") Or InStr(sTag$, Chr(223) & "2 lobt") _
+                  Or InStr(sTag$, Chr(223) & "2 migfg") Or InStr(sTag$, Chr(223) & "2 mim") _
+                  Or InStr(sTag$, Chr(223) & "2 rbbin") Or InStr(sTag$, Chr(223) & "2 rbgenr") _
+                  Or InStr(sTag$, Chr(223) & "2 rbmscv") Or InStr(sTag$, Chr(223) & "2 rbpap") _
+                  Or InStr(sTag$, Chr(223) & "2 rbpri") Or InStr(sTag$, Chr(223) & "2 rbprov") _
+                  Or InStr(sTag$, Chr(223) & "2 rbpub") Or InStr(sTag$, Chr(223) & "2 rbtyp") _
+                  Or InStr(sTag$, Chr(223) & "2 estc") Or InStr(sTag$, Chr(223) & "2 rdafmn") _
+                  Or InStr(sTag$, Chr(223) & "2 rdafnm")  
+               Then
                      'MsgBox "Keep list: " & sTag$
                      'do nothing, go to the next one
                Else
