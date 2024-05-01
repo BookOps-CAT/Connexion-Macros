@@ -1,23 +1,38 @@
-'MacroName:UpdateExport
-'MacroDescription:Updates OCLC holdings then exports a bibliographic record.
+'MacroName:UpdateExport_Permissive
+'MacroDescription: Cleans up 6xxs, updates OCLC holdings, then exports a bibliographic record using correct for monos or serials Sierra load table.
+'  This more permissive UpdateExport macro preserves the following 6xx:
+'  + AAT
+'  + BIDEX
+'  + ESTC
+'  + FAST
+'  + GMGPC
+'  + GSAFD
+'  + HOMOIT
+'  + LCGFT
+'  + LCSH
+'  + LOBT
+'  + MIGFG
+'  + MIM
+'  + RBBIN
+'  + RBGENR
+'  + RBMSCV
+'  + RBPAP
+'  + RBPRI
+'  + RBPROV
+'  + RBPUB
+'  + RBTYP
+'  + RDA
+'  + RDAFMN
+'  + RDAFNM
+'  + TEPT
 
-'v1.9 RareBKext (2024-03-20)
-'   * expands list of approved thesauri to include other rare book vocabularies
-'.v1.8 aat (2024-06-23)
-'   * fixes list of approved thesauri to include aat and removes temp patch for short stories
-'v1.7 (2023-06-23)
-'  * fixes a bug causing an error in records with more than 200 tags - max set to 400 fields now;
-'  * additionally removes non-supported 6xx tags correctly for instances in longer bibs 
-'v1.6 (2022-07-19)
-'  * fixes a bug that caused error in records with more than 100 tags
-'v1.5 (2022-05-13)
-'  * permits 69x tags (used at Schomburg, and some special collections)
-'v1.4 (2022-05-06)
-'  * adds removal of unsupported subject vocabularies from 6xx tags; permits only BIDEX, FAST, GSAFD, HOMOIT, LCGFT, and LCSH
-'v1.3 (2018-07-02)
-'  * added general fiction short stories warning message
-'v1.2 (2018-02-09)
-'  * added enforcement of oclcgw load table for NYPL records
+'v1.2 2024-05-01
+'  * expands approved thesauri to include tept (Thesaurus of Ephemera Terms)
+'v1.1 2024-03-25
+'  * expands list of approved thesauri to include other rare book vocabularies: estc, gmgpc, lobt, migfg,
+'     mim, rbbin, rbgenr, rbmscv, rbpap, rbpri, rbprov, rbpup, rbtyp, rda, rdafmn, rdafnm
+'v1.0 2024-02-26
+'  * a modified UpdateExport macro preserving 6xx from lcsh, fast, gsafd, bidex, lcgft, homoit, aat
 
 Option Explicit
 
@@ -85,7 +100,8 @@ Sub CleanSubjectTags()
                   Or InStr(sTag$, Chr(223) & "2 rbpap") Or InStr(sTag$, Chr(223) & "2 rbpri") _
                   Or InStr(sTag$, Chr(223) & "2 rbprov") Or InStr(sTag$, Chr(223) & "2 rbpub") _
                   Or InStr(sTag$, Chr(223) & "2 rbtyp") Or InStr(sTag$, Chr(223) & "2 rda") _
-                  Or InStr(sTag$, Chr(223) & "2 rdafmn") Or InStr(sTag$, Chr(223) & "2 rdafnm") Then
+                  Or InStr(sTag$, Chr(223) & "2 rdafmn") Or InStr(sTag$, Chr(223) & "2 rdafnm") _
+                  Or InStr(sTag$, Chr(223) & "2 tept") Then
                   
                      'MsgBox "Keep list: " & sTag$
                      'do nothing, go to the next one
