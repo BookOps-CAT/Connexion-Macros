@@ -44,7 +44,7 @@ Done!
 	* [BackupSettings.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATBackupSettings.bas)
 	* [CATBibcoEval.bas v1.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATBibcoEval.bas)
 	* [UpdateExport.bas v1.8](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport.bas)
-	* [CATUpdateExport_RarebkEXTExt.bas v1.9](http://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport_RarebkEXTExt.bas)
+	* [CATUpdateExport_Permissive v1.2](http://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport_Permissive.bas)
     * [CATShareSave.bas v1.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATShareSave.bas)
     * [CATUserDual.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATNewUserDual.bas)
     * [CATUserNYP.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATNewUserNYP.bas)
