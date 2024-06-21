@@ -1,7 +1,9 @@
 'MacroName:UpdateExport
 'MacroDescription:Updates OCLC holdings then exports a bibliographic record.
-'Version: 1.8
+'Version: 1.9
 
+'v1.9 (2024-06-20)
+' * permits 653 for SCIPIO records (042 scipio)
 'v1.8 (2024-02-26)
 ' * removes short stories warning flag
 'v1.7 (2023-06-23)
@@ -47,13 +49,15 @@ Sub CleanSubjectTags()
    Dim CS As Object
    Set CS  = GetObject(,"Connex.Client")
 
-   Dim sTag$, lt$, rt$
-   Dim nBool
+   Dim sAuthCode$, sTag$, lt$, rt$
+   Dim nBool, aBool
    Dim n, place As Integer
    Dim DelArr(6 to 400) As Integer
    
    'strip unwanted MARC tags:
    'remove subject from unsupported thesauri
+   
+   aBool = CS.GetField("042", 1, sAuthCode$)
   
    n = 6
    nBool = CS.GetFieldLine(n,sTag$)
@@ -61,8 +65,12 @@ Sub CleanSubjectTags()
       'MsgBox n & ", " & sTag$
       If Left(sTag$, 1) = "6" Then
          If InStr("653", Mid(sTag$, 1, 3)) <> 0 Then
-            DelArr(n) = n
-            'MsgBox "DEL 65x: " & sTag$
+            If aBool = TRUE And InStr(sAuthCode$, "scipio") Then
+               'allow SCIPIO 653s
+            Else
+               DelArr(n) = n
+               'MsgBox "DEL 65x: " & sTag$
+            End If
          ElseIf InStr("69", Mid(sTag$, 1, 2)) <> 0 Then
             'do nothing, however these tags are coded
             'MsgBox "Keep 69x: " & sTag$
