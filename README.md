@@ -3,7 +3,7 @@ A repository of BookOps Cataloging Department macros for the OCLC Connexion clie
 
 ## Installation
 ### Easy Way
-To install, find the macrobook you are interested in the [`Connexion-Macros/macrobooks/` folder](https://github.com/BookOps-CAT/Connexion-Macros/tree/main/macrobooks), click on it and download it to your computer.
+To install, find the macrobook you are interested in the [`Connexion-Macros/macrobooks/` folder](https://github.com/BookOps-CAT/Connexion-Macros/tree/main/macrobooks), click on it, and download it to your computer.
 
 Example, downloading the `CAT macrobook` which includes UpdateExport, BackupSettings, and other macros:
 ![macrobook-download-button](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/media/macrobook-download.png)
