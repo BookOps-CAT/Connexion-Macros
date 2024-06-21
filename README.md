@@ -43,8 +43,8 @@ Done!
 4. [CAT.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/CAT.mbk)
 	* [BackupSettings.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATBackupSettings.bas): backups Connexion client settings
 	* [BibcoEval.bas v1.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATBibcoEval.bas): evaluates and flags elements missing or incorrect for BIBCO records
-	* [UpdateExport.bas v1.8](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport.bas): updates holdings, cleans 6xxs, sets appropriate Sierra load table, and exports records to Sierra; to be used in BookOps CAT
-	* [UpdateExport_Permissive.bas v1.2](http://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport_Permissive.bas): more permissive version of `UpdateExport` macro allowing a wider range of vocabularies in 6xx fields
+	* [UpdateExport.bas v1.9](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport.bas): updates holdings, cleans 6xxs, sets appropriate Sierra load table, and exports records to Sierra; to be used in BookOps CAT
+	* [UpdateExport_Permissive.bas v1.3](http://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport_Permissive.bas): more permissive version of `UpdateExport` macro allowing a wider range of vocabularies in 6xx fields
 	* [ShareSave.bas v1.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATShareSave.bas)
     * [UserDual.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATNewUserDual.bas): creates dual, BPL & NYPL, profiles in the Connexion client; requires access to CATAL network drive
     * [UserNYP.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATNewUserNYP.bas): creates single NYPL Connexion client profile
