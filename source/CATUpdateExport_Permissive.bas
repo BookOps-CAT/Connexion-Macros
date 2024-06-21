@@ -26,6 +26,8 @@
 '  + RDAFNM
 '  + TEPT
 
+'v1.3 2024-06-20
+'  * allows 653s if 042 authorization code has SCIPIO (art & rare books sales/auction catalogs)
 'v1.2 2024-05-01
 '  * expands approved thesauri to include tept (Thesaurus of Ephemera Terms)
 'v1.1 2024-03-25
@@ -63,13 +65,16 @@ Sub CleanSubjectTags()
    Dim CS As Object
    Set CS  = GetObject(,"Connex.Client")
 
-   Dim sTag$, lt$, rt$
-   Dim nBool
+   Dim sAuthCode$, sTag$, lt$, rt$
+   Dim aBool, nBool
    Dim n, place As Integer
    Dim DelArr(6 to 400) As Integer
    
    'strip unwanted MARC tags:
    'remove subject from unsupported thesauri
+   
+   'check & store authorization code
+   aBool = CS.GetField("042", 1, sAuthCode$)
   
    n = 6
    nBool = CS.GetFieldLine(n,sTag$)
@@ -77,8 +82,12 @@ Sub CleanSubjectTags()
       'MsgBox n & ", " & sTag$
       If Left(sTag$, 1) = "6" Then
          If InStr("653", Mid(sTag$, 1, 3)) <> 0 Then
-            DelArr(n) = n
-            'MsgBox "DEL 65x: " & sTag$
+            If aBool = TRUE And InStr(sAuthCode$, "scipio") Then
+               'allow SCIPIO 653s
+            Else
+               DelArr(n) = n
+               'MsgBox "DEL 65x: " & sTag$
+            End If
          ElseIf InStr("69", Mid(sTag$, 1, 2)) <> 0 Then
             'do nothing, however these tags are coded
             'MsgBox "Keep 69x: " & sTag$
