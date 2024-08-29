@@ -155,7 +155,6 @@ Sub Main
             sCallNumTag = "948"
             
             'determine correct load table
-            'Call PreferedLoadTable(sBLvl)
             sPreferedLoadTable = PreferedLoadTable(sBLvl)
 
             n = 1
