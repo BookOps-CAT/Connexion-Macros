@@ -8,7 +8,9 @@
 '                  overlay string supplied for World Language materials 
 'Macro created by: Tomasz Kalata, BookOps
 
-
+'v.3.4.0 (08-29-2024):
+'  * removes ISBNs with "Kindle" qualifier
+'  * adds fill character (Chr(252)) to missing or invalid call number elements
 'v3.3.0 (02-06-2023) changes:
 '  * removal of flags for 005.258 (programming for specific operating systems), 005.3582 (apps for specific mobile devices),
 '        005.432 (specific operating systems), 005.5 (general purpose programs), 005.7585 & 005.7565 (database management systems),
@@ -700,6 +702,12 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
    Set CS  = GetObject(,"Connex.Client")
    Dim sNameTitle$
    Dim i as Integer
+   
+   'linked fields with Non-Latin script are displayed first,
+   'they should be ignored for cuttering purposes;
+   'occasionally primary Latin script (MARC-8) will have a unicode-encoded
+   'character if it is not supported by MARC-8 (for example African inverted e - see #1163881264 for example)
+   'and in such situations CutterArray should display a warning but allow to use an element for cuttering
       
    bool100 = CS.GetFieldUnicode("100", 1, sNameTitle)
    If bool100 = TRUE Then
@@ -709,6 +717,7 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
       Call Diacritics(sNameTitle)
       sCutterArr = sNameTitle & Chr(9)
    End If
+   
    bool110 = CS.GetFieldUnicode("110", 1, sNameTitle)
    If bool110 = TRUE Then
       If InStr(sNameTitle, "&#") <> 0 Then
@@ -717,12 +726,17 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
       Call Diacritics(sNameTitle)
       sCutterArr = sNameTitle & Chr(9)
    End If
+   
    bool245 = CS.GetFieldUnicode("245", 1, sNameTitle)
    If bool245 = TRUE Then
       If InStr(sNameTitle, "&#") <> 0 Then
          bool245 = CS.GetFieldUnicode("245", 2, sNameTitle)
       End If
-      Call Diacritics(sNameTitle)
+      If sNameTitle = "" Or InStr(sNameTitle, "&#") <> 0 Then
+         sNameTitle = "245_" & Chr(252)
+      Else
+         Call Diacritics(sNameTitle)
+      End If
       sCutterArr = sCutterArr & sNameTitle & Chr(9)
    End If
 
@@ -796,7 +810,7 @@ Sub Diacritics(sNameTitle)
       sNameTitle = lt$ + rt$
    Else
       lt$ = Left(sNameTitle, 3) & "_"
-      rt$ = Mid(sNameTitle, 6 + Indicator, 10)
+      rt$ = Mid(sNameTitle, 6 + Indicator, 10) 'is this 10 a correct limitation? is title cutter being shortened for DVD by this?
       sNameTitle = lt$ + rt$
    End If
    i = 1
@@ -1582,7 +1596,8 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
          If InStr(isbn$, "ebk") <> 0 Or InStr(isbn$, "ebook") <> 0 Or InStr(isbn$, "electronic") <> 0 _ 
           Or InStr(isbn$, "e-book") <> 0 Or InStr(isbn$, "e-isbn") <> 0 Or InStr(isbn$, "e-mhid") <> 0 _ 
           Or InStr(isbn$, "pdf") <> 0 Or InStr(isbn$, "epub") <> 0 Or InStr(isbn$, "e-mobi") <> 0 _
-          Or InStr(isbn$, "html") <> 0 Or InStr(isbn$, "mobil") <> 0 Or InStr(isbn$, "el.") <> 0 Then
+          Or InStr(isbn$, "html") <> 0 Or InStr(isbn$, "mobil") <> 0 Or InStr(isbn$, "el.") <> 0 _
+          Or InStr(isbn$, "kindle") <> 0 Then
             'remove apostrophe in the beginning of the line below to display deleted isbns
             'MsgBox isbn$
             CS.DeleteField "020", n
@@ -1600,3 +1615,4 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    CS.EndRecord
 
 End Sub
+
