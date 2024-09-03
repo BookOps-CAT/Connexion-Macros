@@ -61,6 +61,7 @@
 Declare Function Dewey(sAudn,sCallType)
 Declare Function FileDlgFunction(identifier$, action, suppvalue)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
+Declare Function Normalized(sNameTitle, sTag)
 Declare Sub CutterArray(sCutterArr,sCallType,sDewey)
 Declare Sub SubjectChoice(sSubjectArr)
 Declare Sub Diacritics(sNameTitle)
@@ -470,6 +471,10 @@ End Function
 
 '########################################################
 
+Function ConstructCutter(sNameTitle)
+
+'########################################################
+
 Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
 'Cuttering rules:
    'Rule1: full surname from 100 field only
@@ -506,25 +511,25 @@ Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
    
 Rule1:
 'full author last name or error
-   If InStr(sCutterArr, "100_") <> 0 Then
-      start_point = InStr(sCutterArr, "100_")
-      temp$ = Mid(sCutterArr, start_point + 4)
-      end_point = InStr(temp$, Chr(9))
-      sCutter = Left(temp$, end_point - 1)
-   Else
+   If InStr(sCutterArr, "100_" & Chr(252)) <> 0 Then
       MsgBox "INCOMPLETE: Dewey+Name should be used for literary works by a single author (ex.: 811 POE = collection of E.Poe poems)"
       sCutter = Chr(252)
    End If
+ 
+   start_point = InStr(sCutterArr, "100_")
+   temp$ = Mid(sCutterArr, start_point + 4)
+   end_point = InStr(temp$, Chr(9))
+   sCutter = Left(temp$, end_point - 1)
    Goto Done
    
 Rule2:
 'full author last name, first word of 110, or 1st letter of title
-   If InStr(sCutterArr, "100_") <> 0 Then
+   If InStr(sCutterArr, "100_" & Chr(252)) = 0 Then
       start_point = InStr(sCutterArr, "100_")
       temp$ = Mid(sCutterArr, start_point + 4)
       end_point = InStr(temp$, Chr(9))
       sCutter = Left(temp$, end_point - 1)
-   ElseIf InStr(sCutterArr, "110_") <> 0 Then
+   ElseIf InStr(sCutterArr, "110_" & Chr(252)) = 0 Then
       start_point = InStr(sCutterArr, "110_")
       temp$ = Mid(sCutterArr, start_point + 4)
       end_point = InStr(temp$, Chr(9))
@@ -696,11 +701,39 @@ End Sub
 
 '########################################################
 
+Function Normalized(sNameTitle, sTag)
+   'Checks if Unicode is present and shows warning or adds fill character for empty strings.
+   'Activates Diacritics routine.
+
+   If InStr(sNameTitle, "&#") <> 0 Then
+      MsgBox "Field " & Left(sNameTitle, 3) & " includes a possibly incorrectly coded character (see &#x code). Please replace with ALA diacritics: '" & Mid(sNameTitle, 6) &  "'" 
+      Normalized = sTag & "_" & Chr(252)
+   ElseIf sNameTitle = "" Then
+      Normalized = sTag & "_" & Chr(252)
+   Else
+      Indicator = Mid(sNameTitle,5,1)
+      If Indicator = "0" Or Indicator = " " Then
+         lt$ = sTag & "_"
+         rt$ = Mid(sNameTitle, 6, 30)
+         sNameTitle = lt$ + rt$
+      Else
+         lt$ = sTag & "_"
+         rt$ = Mid(sNameTitle, 6 + Indicator, 10) 'is this 10 a correct limitation? is title cutter being shortened for DVD by this?
+         sNameTitle = lt$ + rt$
+      End If
+      Call Diacritics(sNameTitle)
+      Normalized = sNameTitle
+   End If
+
+   End Function
+
+'########################################################
+
 Sub CutterArray(sCutterArr,sCallType,sDewey)
 'Creates a string used in cuttering based on author/title field
    Dim CS as Object
    Set CS  = GetObject(,"Connex.Client")
-   Dim sNameTitle$
+   Dim sNameTitle$, sTag$
    Dim i as Integer
    
    'linked fields with Non-Latin script are displayed first,
@@ -709,36 +742,29 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
    'character if it is not supported by MARC-8 (for example African inverted e - see #1163881264 for example)
    'and in such situations CutterArray should display a warning but allow to use an element for cuttering
       
-   bool100 = CS.GetFieldUnicode("100", 1, sNameTitle)
-   If bool100 = TRUE Then
-      If InStr(sNameTitle, "&#") <> 0 Then
-         bool100 = CS.GetFieldUnicode("100", 2, sNameTitle)
-      End If
-      Call Diacritics(sNameTitle)
-      sCutterArr = sNameTitle & Chr(9)
+   sTag = "100"   
+   bool100 = CS.GetFieldUnicode(sTag, 2, sNameTitle)
+   If bool100 = False Then
+      CS.GetFieldUnicode sTag, 1, sNameTitle
    End If
+   sNameTitle = Normalized(sNameTitle, sTag)
+   sCutterArr = sNameTitle & Chr(9)
    
-   bool110 = CS.GetFieldUnicode("110", 1, sNameTitle)
-   If bool110 = TRUE Then
-      If InStr(sNameTitle, "&#") <> 0 Then
-         bool110 = CS.GetFieldUnicode("110", 2, sNameTitle)
-      End If
-      Call Diacritics(sNameTitle)
-      sCutterArr = sNameTitle & Chr(9)
+   sTag = "110"
+   bool110 = CS.GetFieldUnicode(sTag, 2, sNameTitle)
+   If bool110 = False Then
+      CS.GetFieldUnicode sTag, 1, sNameTitle
    End If
+   sNameTitle = Normalized(sNameTitle, sTag)
+   sCutterArr = sCutterArr & sNameTitle & Chr(9)
    
-   bool245 = CS.GetFieldUnicode("245", 1, sNameTitle)
-   If bool245 = TRUE Then
-      If InStr(sNameTitle, "&#") <> 0 Then
-         bool245 = CS.GetFieldUnicode("245", 2, sNameTitle)
-      End If
-      If sNameTitle = "" Or InStr(sNameTitle, "&#") <> 0 Then
-         sNameTitle = "245_" & Chr(252)
-      Else
-         Call Diacritics(sNameTitle)
-      End If
-      sCutterArr = sCutterArr & sNameTitle & Chr(9)
+   sTag = "245"
+   bool245 = CS.GetFieldUnicode(sTag, 2, sNameTitle)
+   If bool245 = False Then
+         CS.GetFieldUnicode sTag, 1, sNameTitle
    End If
+   sNameTitle = Normalized(sNameTitle, sTag)
+   sCutterArr = sCutterArr & sNameTitle & Chr(9)
 
    
    If sCallType = "des" Or sCallType = "bio" Then
@@ -801,18 +827,8 @@ End Sub
 '####################################################################
 
 Sub Diacritics(sNameTitle)
-'removes diacritic marks and other unwanted characters from a string
-   
-   Indicator = Mid(sNameTitle,5,1)
-   If Indicator = "0" Or Indicator = " " Then
-      lt$ = Left(sNameTitle, 3) & "_"
-      rt$ = Mid(sNameTitle, 6, 30)
-      sNameTitle = lt$ + rt$
-   Else
-      lt$ = Left(sNameTitle, 3) & "_"
-      rt$ = Mid(sNameTitle, 6 + Indicator, 10) 'is this 10 a correct limitation? is title cutter being shortened for DVD by this?
-      sNameTitle = lt$ + rt$
-   End If
+   'removes diacritic marks and other unwanted characters from a string
+ 
    i = 1
    While i <= Len(sNameTitle)
       CheckChar = Mid(sNameTitle, i, 1)
