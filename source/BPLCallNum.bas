@@ -11,6 +11,8 @@
 'v.3.4.0 (08-29-2024):
 '  * removes ISBNs with "Kindle" qualifier
 '  * adds fill character (Chr(252)) to missing or invalid call number elements
+'  * sets Sierra bib format to 8 for READALONGS
+'  * sets 4 digits after period limit except for 8xx
 'v3.3.0 (02-06-2023) changes:
 '  * removal of flags for 005.258 (programming for specific operating systems), 005.3582 (apps for specific mobile devices),
 '        005.432 (specific operating systems), 005.5 (general purpose programs), 005.7585 & 005.7565 (database management systems),
@@ -160,7 +162,7 @@ Sub Main
          OptionButton  24,  175, 80, 14, "&MOVIE"
          OptionButton  24,  195, 80, 14, "&TV"
          
-         Text          150, 57, 40, 24, "(jje, jer)"
+         Text          150, 57, 40, 24, "(jbb, jje, jer)"
          Text          130, 77, 64, 20, "( _fc, _my, _sf, _sh)"
          Text          134, 97, 64, 20, "( _nf, _ej, _nf, _ej)"
          Text          155, 117, 64, 14, "(_nf)"
@@ -347,8 +349,10 @@ CaseType:
       
       Call CutterArray(sCutterArr,sCallType,sDewey)
       sCutter = Cutter(sCutterArr,sCallType,sBiog,sLTxt)
+
       'Output selection
       If dCallNum.sOutput = 1 Then
+         'for in-memory output remove subfields coding
          s099 = s099 & sCutter
          s099 = Mid(s099, 6)
          Do While InStr(s099, Chr(223)) <> 0
@@ -450,7 +454,13 @@ Function Dewey(sAudn,sCallType)
       Loop
       Call LocalDewey(s082,sCallType)
    Else
-      s082 = Mid(s082,6,20)
+      'with exception to 8xx limit number of digits after decimal point to 4 only
+      If Mid(s082, 6) = "8" Then
+         s082 = Mid(s082, 6, 8)
+      Else
+         s082 = Mid(s082,6,20)
+      End If
+      
       Call LocalDewey(s082,sCallType)
       Do
          x = Len(s082)
@@ -468,10 +478,6 @@ Function Dewey(sAudn,sCallType)
    Dewey = s082 & " " & Chr(223) & "a "
 Done:
 End Function
-
-'########################################################
-
-Function ConstructCutter(sNameTitle)
 
 '########################################################
 
@@ -514,12 +520,12 @@ Rule1:
    If InStr(sCutterArr, "100_" & Chr(252)) <> 0 Then
       MsgBox "INCOMPLETE: Dewey+Name should be used for literary works by a single author (ex.: 811 POE = collection of E.Poe poems)"
       sCutter = Chr(252)
+   Else
+      start_point = InStr(sCutterArr, "100_")
+      temp$ = Mid(sCutterArr, start_point + 4)
+      end_point = InStr(temp$, Chr(9))
+      sCutter = Left(temp$, end_point - 1)
    End If
- 
-   start_point = InStr(sCutterArr, "100_")
-   temp$ = Mid(sCutterArr, start_point + 4)
-   end_point = InStr(temp$, Chr(9))
-   sCutter = Left(temp$, end_point - 1)
    Goto Done
    
 Rule2:
@@ -548,23 +554,24 @@ Rule2:
    
 Rule3:
 '1st letter of main entry
-   If InStr(sCutterArr, "100_") <> 0 Then
+   If InStr(sCutterArr, "100_" & Chr(252)) = 0 Then
       start_point = InStr(sCutterArr, "100_")
       sCutter = Mid(sCutterArr, start_point + 4, 1)
-   ElseIf InStr(sCutterArr, "110_") <> 0 Then
+   ElseIf InStr(sCutterArr, "110_" & Chr(252)) = 0 Then
       start_point = InStr(sCutterArr, "110_")
       sCutter = Mid(sCutterArr, start_point + 4, 1)
+   ElseIf InStr(sCutterArr, "245_" & Chr(252)) = 0 Then
+      start_point = InStr(sCutterArr, "245_")
+      sCutter = Mid(sCutterArr, start_point + 4, 1)
    Else
-      If InStr(sCutterArr, "245_") <> 0 Then
-         start_point = InStr(sCutterArr, "245_")
-         sCutter = Mid(sCutterArr, start_point + 4, 1)
-      End If
+      MsgBox "MISSING DATA: Unable to create a cutter."
+      sCutter = Chr(252)
    End If
    Goto Done
    
 Rule4:
 'full 1st word of title
-   If InStr(sCutterArr, "245_") <> 0 Then
+   If InStr(sCutterArr, "245_" & Chr(252)) = 0 Then
       start_point = InStr(sCutterArr, "245_")
       temp$ = Mid(sCutterArr, start_point + 4)
       end_point = InStr(temp$, Chr(9))
@@ -629,15 +636,15 @@ Rule5:
    End If
    
    If sBiog = "b" Or (InStr("bt", sLTxt) <> 0 And sBiog <> "") Or (sBiog = "a" And sLTxt = "") Or (sBiog = "" And InStr("am", sLTxt) <> 0 And sLTxt <> "") Or sCallType = "des" Or sCallType = "bio" Then
-      If InStr(sCutterArr, "100_") <> 0 Then
+      If InStr(sCutterArr, "100_" & Chr(252)) = 0 Then
          start_point = InStr(sCutterArr, "100_")
          temp$ = Mid(sCutterArr, start_point + 4, 1)
          sCutter = sCutter & " " & Chr(223) & "a " & temp$
-      ElseIf InStr(sCutterArr, "110_") <> 0 Then
+      ElseIf InStr(sCutterArr, "110_" & Chr(252)) = 0 Then
          start_point = InStr(sCutterArr, "110_")
          temp$ = Mid(sCutterArr, start_point + 4, 1)
          sCutter = sCutter & " " &  Chr(223) & "a " & temp$
-      Else
+      ElseIf InStr(sCutterArr, "245_" & Chr(252)) = 0 Then
          start_point = InStr(sCutterArr, "245_")
          temp$ = Mid(sCutterArr, start_point + 4, 1)
          sCutter = sCutter & " " &  Chr(223) & "a " & temp$
@@ -651,7 +658,7 @@ Rule5:
 Rule6:
 'Rule obsolete (cuttering autobiography has changed to main entry on June 14, 2019)
 'full last name from 600 and 1st letter of title if autobiography
-   If InStr(sCutterArr, "245_") <> 0 Then
+   If InStr(sCutterArr, "245_" & Chr(252)) = 0 Then
       start_point = InStr(sCutterArr, "245_")
       temp$ = Mid(sCutterArr, start_point + 4, 1)
       sCutter = sCutter & " " & Chr(223) & "a " & temp$
@@ -721,8 +728,48 @@ Function Normalized(sNameTitle, sTag)
          rt$ = Mid(sNameTitle, 6 + Indicator, 10) 'is this 10 a correct limitation? is title cutter being shortened for DVD by this?
          sNameTitle = lt$ + rt$
       End If
+      
+      If InStr(sNameTitle, Chr(223) & "e") Then
+         place = InStr(sNameTitle, Chr(223) & "e")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "d") Then
+         place = InStr(sNameTitle, Chr(223) & "d")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "c") Then
+         place = InStr(sNameTitle, Chr(223) & "c")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "v") Then
+         place = InStr(sNameTitle, Chr(223) & "v")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      Do While InStr(sNameTitle, ",")
+         place = InStr(sNameTitle, ",")
+         sNameTitle = RTrim(Left(sNameTitle, place - 1))
+      Loop
+      Do While InStr(sNameTitle, Chr(223))
+         place = InStr(sNameTitle, Chr(223))
+         lt$ = Left(sNameTitle, place-2)
+         rt$ = Mid(sNameTitle, place+2)
+         sNameTitle = lt$ + rt$
+      Loop
+      Do While InStr(sNameTitle, ".")
+         place = InStr(sNameTitle, ".")
+         lt$ = Left(sNameTitle, place-1)
+         rt$ = Mid(sNameTitle, place+1)
+         sNameTitle = lt$ + rt$
+      Loop
+      
       Call Diacritics(sNameTitle)
+      sNameTitle = UCase(sNameTitle)
       Normalized = sNameTitle
+
    End If
 
    End Function
@@ -769,18 +816,20 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
    
    If sCallType = "des" Or sCallType = "bio" Then
       i = 1
+      sTag = "600"
       Do While CS.GetFieldUnicode("600", i, sNameTitle)
          If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
-            Call Diacritics(sNameTitle)
+            sNameTitle = Normalized(sNameTitle, sTag)
             sCutterArr = sCutterArr & sNameTitle & Chr(9)
          End If
          i = i + 1
       Loop
       If sCallType = "des" Then
          i = 1
+         sTag = "610"
          Do While CS.GetFieldUnicode("610", i, sNameTitle)
             If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
-               Call Diacritics(sNameTitle)
+               sNameTitle = Normalized(sNameTitle, sTag)
                If InStr(sNameTitle, "(") Then
                   place = InStr(sNameTitle, "(")
                   sNameTitle = Left(sNameTitle, place-1)
@@ -793,9 +842,10 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
          
          If Left(sDewey, 3) = "004" Or Left(sDewey, 3) = "005" Or Left(sDewey, 3) = "006" Then
             i = 1
+            sTag = "630"
             Do While CS.GetFieldUnicode("630", i, sNameTitle)
                If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
-                  Call Diacritics(sNameTitle)
+                  sNameTitle = Normalized(sNameTitle, sTag)
                   If InStr(sNameTitle, "(") Then
                      place = InStr(sNameTitle, "(")
                      sNameTitle = Left(sNameTitle, place-1)
@@ -806,9 +856,10 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
                i = i + 1
             Loop
             i = 1
+            sTag = "650"
             Do While CS.GetFieldUnicode("650", i, sNameTitle)
                If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
-                  Call Diacritics(sNameTitle)
+                  sNameTitle = Normalized(sNameTitle, sTag)
                   If InStr(sNameTitle, "(") Then
                      place = InStr(sNameTitle, "(")
                      sNameTitle = Left(sNameTitle, place-1)
@@ -821,6 +872,7 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
          End If
       End If
   End If
+
    
 End Sub
 
@@ -874,43 +926,6 @@ Sub Diacritics(sNameTitle)
       End Select
       i = i + 1   
    Wend
-   If InStr(sNameTitle, Chr(223) & "e") Then
-      place = InStr(sNameTitle, Chr(223) & "e")
-      sNameTitle = Left(sNameTitle, place-1)
-      sNameTitle = RTrim(sNameTitle)
-   End If
-   If InStr(sNameTitle, Chr(223) & "d") Then
-      place = InStr(sNameTitle, Chr(223) & "d")
-      sNameTitle = Left(sNameTitle, place-1)
-      sNameTitle = RTrim(sNameTitle)
-   End If
-   If InStr(sNameTitle, Chr(223) & "c") Then
-      place = InStr(sNameTitle, Chr(223) & "c")
-      sNameTitle = Left(sNameTitle, place-1)
-      sNameTitle = RTrim(sNameTitle)
-   End If
-   If InStr(sNameTitle, Chr(223) & "v") Then
-      place = InStr(sNameTitle, Chr(223) & "v")
-      sNameTitle = Left(sNameTitle, place-1)
-      sNameTitle = RTrim(sNameTitle)
-   End If
-   Do While InStr(sNameTitle, ",")
-     place = InStr(sNameTitle, ",")
-     sNameTitle = RTrim(Left(sNameTitle, place - 1))
-   Loop
-   Do While InStr(sNameTitle, Chr(223))
-      place = InStr(sNameTitle, Chr(223))
-      lt$ = Left(sNameTitle, place-2)
-      rt$ = Mid(sNameTitle, place+2)
-      sNameTitle = lt$ + rt$
-   Loop
-   Do While InStr(sNameTitle, ".")
-      place = InStr(sNameTitle, ".")
-      lt$ = Left(sNameTitle, place-1)
-      rt$ = Mid(sNameTitle, place+1)
-      sNameTitle = lt$ + rt$
-   Loop
-   sNameTitle = UCase(sNameTitle)
    
 End Sub
 
@@ -1460,7 +1475,7 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    Dim CS as Object
    Set CS  = GetObject(,"Connex.Client")
 
-   Dim s949$, sCD, sDVD, sIndcator$, sOverlay$, sLargePrint$, SierraCode$, s007$, s006$
+   Dim s949$, sCD, sDVD, sIndcator$, sOverlay$, sLargePrint$, sReadalong$, SierraCode$, s007$, s006$
    Dim n as Integer
 
    CS.SetField 1, s099
@@ -1470,18 +1485,26 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    sLargePrint = "b2=l;"
    sDVD = "b2=h;"
    sCD = "b2=i;"
+   sReadalong = "b2=8;"
+
    
    If sRecType = "a" Then
       If sItemForm = "d" Then
          MsgBox "INFO: Large print record. Setting Sierra format code to large print."
-         SierraCode = s949 & sLargePrint & sOverlay 
+         SierraCode = s949 & sLargePrint & sOverlay
+      ElseIf f = 11 Then
+         SierraCode = s949 & sReadalong & sOverlay
       Else
          SierraCode = s949 & sOverlay
       End If
    ElseIf sRecType = "g" Then
       SierraCode = s949 & sDVD & sOverlay
    ElseIf sRecType = "i" Then
-      SierraCode = s949 & sCD & sOverlay
+      If f = 11 Then
+         SierraCode = s949 & sReadalong & sOverlay
+      Else
+         SierraCode = s949 & sCD & sOverlay
+      End If
    End If
    
    CS.SetField 1, SierraCode
