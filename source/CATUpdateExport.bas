@@ -1,7 +1,9 @@
 'MacroName:UpdateExport
 'MacroDescription:Updates OCLC holdings then exports a bibliographic record.
-'Version: 1.9
+'Version: 1.10
 
+'v1.10 (2024-08-29)
+'  * adds export protection for incomplete call numbers that include a fill character (Chr(252))
 'v1.9 (2024-06-20)
 ' * permits 653 for SCIPIO records (042 scipio)
 'v1.8 (2024-02-26)
@@ -23,9 +25,10 @@
 Option Explicit
 
 Declare Function PreferedLoadTable(sBLvl)
+Declare Function HasCompleteCallNum(sCallNum)
 Declare Sub CleanSubjectTags()
 
-'###############
+'################################
 
 Function PreferedLoadTable(sBLvl)
 
@@ -42,7 +45,19 @@ Function PreferedLoadTable(sBLvl)
 
 End Function
 
-'####################
+'###############################
+
+Function HasCompleteCallNum(sCallNum)
+
+   If InStr(sCallNum, Chr(252)) <> 0 Then
+      HasCompleteCallNum = FALSE
+   Else
+      HasCompleteCallNum = TRUE
+   End If
+   
+End Function
+
+'##############################
 
 Sub CleanSubjectTags()
 
@@ -50,13 +65,14 @@ Sub CleanSubjectTags()
    Set CS  = GetObject(,"Connex.Client")
 
    Dim sAuthCode$, sTag$, lt$, rt$
-   Dim nBool, aBool
+   Dim aBool, nBool
    Dim n, place As Integer
    Dim DelArr(6 to 400) As Integer
    
    'strip unwanted MARC tags:
    'remove subject from unsupported thesauri
    
+   'check & store authorization code
    aBool = CS.GetField("042", 1, sAuthCode$)
   
    n = 6
@@ -109,14 +125,14 @@ Sub CleanSubjectTags()
 
 End Sub
 
-'####################
+'############################
 
 Sub Main
 
    Dim CS As Object
    Set CS  = GetObject(,"Connex.Client")
 
-   Dim sErrorList, sValue, s949, lt, rt, sLoadCommand, sBLvl, sPreferedLoadTable As String
+   Dim sErrorList, sValue, s949, lt, rt, sLoadCommand, sBLvl, sPreferedLoadTable, sCallNum, sCallNumTag As String
    Dim nIndex, n, nPos1, nPos2, nNumErrors As Integer
    Dim bool049, bool949, fieldMissing
 
@@ -135,8 +151,10 @@ Sub Main
             CS.Reformat
             CS.GetFixedField "BLvl", sBLvl
             
+            
+            sCallNumTag = "948"
+            
             'determine correct load table
-            Call PreferedLoadTable(sBLvl)
             sPreferedLoadTable = PreferedLoadTable(sBLvl)
 
             n = 1
@@ -185,14 +203,24 @@ Sub Main
                   End If
                End If
                n = n + 1
-               Loop
-            End If
-         
-            If fieldMissing Then
-               CS.AddField 1, "949  *" + sPreferedLoadTable
-            End If
+            Loop
 
+         Else
+            sCallNumTag = "099"
+         End If
+         
+         If fieldMissing Then
+            CS.AddField 1, "949  *" + sPreferedLoadTable
+         End If
       
+      End If
+      
+      'validation
+      'Check if call number is correctly constructed
+      CS.GetFieldUnicode sCallNumTag, 1, sCallNum
+      If HasCompleteCallNum(sCallNum) = FALSE Then
+         MsgBox "ERROR: Incomplete call number. Please provide missing elements in the call number (" & sCallNumTag & " field) and export the record again. Exiting..."
+         GoTo Done
       End If
       
       nNumErrors = CS.Validate(sErrorList)
