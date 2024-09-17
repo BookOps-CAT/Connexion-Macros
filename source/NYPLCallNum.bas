@@ -2,8 +2,10 @@
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
-'Macro created by: Tomasz Kalata, BookOps
 
+'v3.3.0 (09-17-2024):
+'  * adds fill character (Chr(252)) in lieu of empty or digits in the cutter for non-visual materials (DVDs, BluRay)
+'  * fixes dotles i handling by replacing it with uppercase i
 'v3.2.1 (02-06-2023):
 '  * fixes invalid cutters consisting of numbers in print materials and visual non-fic
 'v3.2.0 (10-25-2022):
@@ -67,6 +69,7 @@
 Option Explicit
 
 Declare Function Dewey(a, sCallType)
+Declare Function HasIllegalCutter(sCutter)
 Declare Sub LocalDewey(s082, sCallType)
 Declare Sub ElemArray(sElemArr, n100, n600)
 Declare Sub ElemArrayChoice(sElemArr, sNameChoice, n600)
@@ -438,6 +441,9 @@ Rule1:
    
    ElseIf Left(sMainEntry, 3) = "245" Then
       sCutter = Mid(sMainEntry, 6, 1)
+      If HasIllegalCutter(sCutter) = 1 Then
+         sCutter = Chr(252)
+      End If
    End If
 
    sCutter = " " & Chr(223) & "c " & sCutter
@@ -446,6 +452,9 @@ Rule1:
 Rule2:
    'dew,den: first letter of main entry
    sCutter = Mid(sMainEntry, 6, 1)
+   If HasIllegalCutter(sCutter) = 1 Then
+      sCutter = Chr(252)
+   End If
    sCutter = " " & Chr(223) & "c " & sCutter
    Goto Done
 
@@ -698,6 +707,8 @@ Function Dewey(a, sCallType)
             s082 = RTrim(Left(s082, place - 1))
          End If
          s082 = Mid(s082, 6)
+ 
+         'shorten Dewey to 4 digits after the period if not 8xx
          If Left(s082, 1) <> "8" Then
             s082 = Left(s082, 8)
          End If
@@ -721,6 +732,19 @@ Function Dewey(a, sCallType)
    Dewey = Chr(223) & "a " & s082
    End If
 Done:
+End Function
+
+'########################################################
+
+Function HasIllegalCutter(sCutter)
+
+   If InStr(0123456789, sCutter) <> 0 Then
+      MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spelled out number in the language of the cataloged material."
+      HasIllegalCutter = 1
+   Else
+      HasIllegalCutter = 0
+   End If
+
 End Function
 
 
@@ -1108,7 +1132,7 @@ Sub Diacritics(sNameTitle)
          Case Chr(178), Chr(162), Chr(188), Chr(172)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "o" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
          'Turkish i without dot
-         Case Chr(183)
+         Case Chr(184)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "i" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
          'u with hook
          Case Chr(189), Chr(173)
@@ -1217,7 +1241,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecTyp
       End If
    ElseIf f = 11 Then
       'format READALONG
-      If sCallType <> "fic" And sCallType <> "dew" And sCallType <> "bio" Then
+      If sCallType <> "fic" Or sCallType <> "dew" Or sCallType <> "bio" Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type. READALONG format is valid only for juvenile fiction, dewey, and biography call numbers"
       End If
       If a = 1 Then
@@ -1295,12 +1319,6 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecTyp
          End If
       End If
    End If
-   
-   'CutterCheck:
-   If InStr("mov,tvs", sCallType) = 0 And InStr("0123456789", Mid(sCutter, 5, 1)) <> 0 Then
-      MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spell out number in the language of the cataloged material."
-   End If 
-
 
 End Sub
 
@@ -1344,5 +1362,5 @@ Sub InsertCallNum(s948, f, sInitials)
    s901 = "901  " & sInitials & " " & Chr(223) & "b CATBL"
    CS.SetField 1, s901
    
- CS.EndRecord
+  CS.EndRecord
 End Sub
