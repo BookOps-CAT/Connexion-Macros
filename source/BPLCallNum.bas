@@ -165,12 +165,12 @@ Sub Main
          OptionButton  24,  175, 80, 14, "&MOVIE"
          OptionButton  24,  195, 80, 14, "&TV"
          
-         Text          150, 57, 40, 24, "(jbb, jje, jer)"
+         Text          137, 57, 40, 24, "(jbb, jje, jer)"
          Text          130, 77, 64, 20, "( _fc, _my, _sf, _sh)"
-         Text          134, 97, 64, 20, "( _nf, _ej)"
-         Text          155, 117, 64, 14, "(_nf)"
-         Text          155, 137, 30, 14, "(anf)"
-         Text          155, 157, 30, 10, "( _bi)"
+         Text          142, 97, 50, 20, "( _nf, _ej)"
+         Text          157, 117, 30, 14, "( _nf)"
+         Text          158, 137, 30, 14, "(anf)"
+         Text          157, 157, 30, 10, "( _bi)"
          Text          155, 177, 30, 10, "( _dv)"
          Text          155, 197, 30, 10, "( _dv)"
          DropListBox   20, 10, 70, 115, sFormat(), .sFormat

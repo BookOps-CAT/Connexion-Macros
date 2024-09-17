@@ -6,6 +6,7 @@
 'v3.3.0 (09-17-2024):
 '  * adds fill character (Chr(252)) in lieu of empty or digits in the cutter for non-visual materials (DVDs, BluRay)
 '  * fixes dotles i handling by replacing it with uppercase i
+'  * fixes READALONG Sierra Material Type code (5)
 'v3.2.1 (02-06-2023):
 '  * fixes invalid cutters consisting of numbers in print materials and visual non-fic
 'v3.2.0 (10-25-2022):
@@ -1351,6 +1352,9 @@ Sub InsertCallNum(s948, f, sInitials)
    ElseIf f = 9 Then
       'large-print
       s949 = "949  *b2=l;"
+   ElseIf f = 11 Then
+      'readalong
+      s949 = "949  *b2=5;"
    Else
       'print
       s949 = "949  *b2=a;"

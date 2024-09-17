@@ -50,9 +50,9 @@ End Function
 Function HasCompleteCallNum(sCallNum)
 
    If InStr(sCallNum, Chr(252)) <> 0 Then
-      HasCompleteCallNum = False
+      HasCompleteCallNum = FALSE
    Else
-      HasCompleteCallNum = True
+      HasCompleteCallNum = TRUE
    End If
    
 End Function
@@ -217,11 +217,11 @@ Sub Main
       
       'validation
       'Check if call number is correctly constructed
-         CS.GetFieldUnicode sCallNumTag, 1, sCallNum
-         If HasCompleteCallNum(sCallNum) = False Then
-            MsgBox "ERROR: Incomplete call number. Please provide missing elements in the call number (" & sCallNumTag & " field) and export the record again. Exiting..."
-            GoTo Done
-         End If
+      CS.GetFieldUnicode sCallNumTag, 1, sCallNum
+      If HasCompleteCallNum(sCallNum) = FALSE Then
+         MsgBox "ERROR: Incomplete call number. Please provide missing elements in the call number (" & sCallNumTag & " field) and export the record again. Exiting..."
+         GoTo Done
+      End If
       
       nNumErrors = CS.Validate(sErrorList)
       If nNumErrors > 0 Then
