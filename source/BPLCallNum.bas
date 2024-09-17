@@ -1321,14 +1321,14 @@ AudnCheck:
       ElseIf sAudn = "j" Then
          MsgBox "INFO: Caution advised. Record coded as broad juvenile material (fixed field Audn: j)."
       Else
-         MsgBox "AUDIENCE conflict: Record not coded as eas material (fixed field Audn). Please verify your selection."
+         MsgBox "AUDIENCE conflict: Record not coded as easy material (fixed field Audn). Please verify your selection."
       End If
    Else
       If InStr("cdefgj", sAudn) <> 0 Or sAund = "" Then
          If InStr("cj", sAudn) <> 0 And sAudn <> "" Then
             If a = 0 Then
                If InStr(s082, "[E]") <> 0 And f <> 11 Then
-                  MsgBox "AUDIENCE conflict: The material is classed as eas fiction (082 field - [E]). Please verify your selection."
+                  MsgBox "AUDIENCE conflict: The material is classed as easy fiction (082 field - [E]). Please verify your selection."
                Else
                   Goto LitCheck
                End If
