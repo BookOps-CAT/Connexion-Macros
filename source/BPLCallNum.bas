@@ -5,14 +5,15 @@
 '                  supports selection of names for the call number based on multiple 6xx fields,
 '                  improved behavior for computer science call numbers,
 '                  added separation of cataloger's initials and code (pulled from a file instead)
-'                  overlay string supplied for World Language materials 
-'Macro created by: Tomasz Kalata, BookOps
+'                  overlay string supplied for World Language materials
 
-'v.3.4.0 (08-29-2024):
+'v.3.4.0 (09-17-2024):
 '  * removes ISBNs with "Kindle" qualifier
 '  * adds fill character (Chr(252)) to missing or invalid call number elements
 '  * sets Sierra bib format to 8 for READALONGS
 '  * sets 4 digits after period limit except for 8xx
+'  * fixes handling of dotless i common in Turkish materials by replacing it with uppercase i
+'  * fixes duplication of ilocs in main menu
 'v3.3.0 (02-06-2023) changes:
 '  * removal of flags for 005.258 (programming for specific operating systems), 005.3582 (apps for specific mobile devices),
 '        005.432 (specific operating systems), 005.5 (general purpose programs), 005.7585 & 005.7565 (database management systems),
@@ -62,7 +63,9 @@
 
 Declare Function Dewey(sAudn,sCallType)
 Declare Function FileDlgFunction(identifier$, action, suppvalue)
+Declare Function CleanCuttersLastDigit(s082)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
+Declare Function HasIllegalCutter(sCutter)
 Declare Function Normalized(sNameTitle, sTag)
 Declare Sub CutterArray(sCutterArr,sCallType,sDewey)
 Declare Sub SubjectChoice(sSubjectArr)
@@ -164,7 +167,7 @@ Sub Main
          
          Text          150, 57, 40, 24, "(jbb, jje, jer)"
          Text          130, 77, 64, 20, "( _fc, _my, _sf, _sh)"
-         Text          134, 97, 64, 20, "( _nf, _ej, _nf, _ej)"
+         Text          134, 97, 64, 20, "( _nf, _ej)"
          Text          155, 117, 64, 14, "(_nf)"
          Text          155, 137, 30, 14, "(anf)"
          Text          155, 157, 30, 10, "( _bi)"
@@ -397,8 +400,7 @@ Function Dewey(sAudn,sCallType)
    Dim CS as Object
    Set CS  = GetObject(,"Connex.Client")
 
-   Dim s082$, sLastDigit$
-   Dim x as Integer
+   Dim s082$
    Dim place as Integer
    
    bool082 = CS.GetField("082", 1, s082)
@@ -437,46 +439,48 @@ Function Dewey(sAudn,sCallType)
          Goto Done
       End If
    End If
+
    'removes 0 if it's the last digit and loop
    If sAudn = "j" Or sAudn = "a" Or sAudn = "b" Or sAudn = "c" Then
       s082 = RTrim(Mid(s082,6,8))
-      Do
-         x = Len(s082)
-         If x <= 3 Then
-            Exit Do
-         End If
-         sLastDigit = Right(s082,1)
-         If sLastDigit = "0" Or sLastDigit = "." Then
-            s082 = Left(s082, x - 1)
-         Else
-            Exit Do
-         End If
-      Loop
       Call LocalDewey(s082,sCallType)
+      s082 = CleanCuttersLastDigit(s082)
    Else
       'with exception to 8xx limit number of digits after decimal point to 4 only
-      If Mid(s082, 6) = "8" Then
-         s082 = Mid(s082, 6, 8)
+      If Mid(s082, 6, 1) = "8" Then
+         s082 = Mid(s082, 6, 20)
       Else
-         s082 = Mid(s082,6,20)
+         s082 = Mid(s082,6,8)
       End If
-      
       Call LocalDewey(s082,sCallType)
-      Do
-         x = Len(s082)
-         If x <= 3 Then
-            Exit Do
-         End If
-         sLastDigit = Right(s082,1)
-         If sLastDigit = "0" Or sLastDigit = "." Then
-            s082 = Left(s082, x - 1)
-         Else
-            Exit Do
-         End If
-      Loop
+      s082 = CleanCuttersLastDigit(s082)
+
    End If
    Dewey = s082 & " " & Chr(223) & "a "
 Done:
+End Function
+
+'########################################################
+Function CleanCuttersLastDigit(s082)
+
+   Dim sLastDigit$
+   Dim x as Integer
+   
+   Do
+      x = Len(s082)
+      If x <= 3 Then
+         Exit Do
+      End If
+      sLastDigit = Right(s082,1)
+      If sLastDigit = "0" Or sLastDigit = "." Then
+         s082 = Left(s082, x - 1)
+      Else
+         Exit Do
+      End If
+   Loop
+   
+   CleanCuttersLastDigit = s082
+
 End Function
 
 '########################################################
@@ -516,7 +520,7 @@ Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
    End If
    
 Rule1:
-'full author last name or error
+'full author last name
    If InStr(sCutterArr, "100_" & Chr(252)) <> 0 Then
       MsgBox "INCOMPLETE: Dewey+Name should be used for literary works by a single author (ex.: 811 POE = collection of E.Poe poems)"
       sCutter = Chr(252)
@@ -548,6 +552,11 @@ Rule2:
       If InStr(sCutterArr, "245_") <> 0 Then
          start_point = InStr(sCutterArr, "245_")
          sCutter = Mid(sCutterArr, start_point + 4, 1)
+         
+         If HasIllegalCutter(sCutter) = 1 Then
+            sCutter = Chr(252)
+         End If
+
       End If
    End If
    Goto Done
@@ -563,6 +572,9 @@ Rule3:
    ElseIf InStr(sCutterArr, "245_" & Chr(252)) = 0 Then
       start_point = InStr(sCutterArr, "245_")
       sCutter = Mid(sCutterArr, start_point + 4, 1)
+      If HasIllegalCutter(sCutter) = 1 Then
+         sCutter = Chr(252)
+      End If
    Else
       MsgBox "MISSING DATA: Unable to create a cutter."
       sCutter = Chr(252)
@@ -670,6 +682,19 @@ Rule7:
    
 Done:
    Cutter = sCutter
+End Function
+
+'########################################################
+
+Function HasIllegalCutter(sCutter)
+
+   If InStr(0123456789, sCutter) <> 0 Then
+      MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spelled out number in the language of the cataloged material."
+      HasIllegalCutter = 1
+   Else
+      HasIllegalCutter = 0
+   End If
+
 End Function
 
 '########################################################
@@ -791,6 +816,7 @@ Sub CutterArray(sCutterArr,sCallType,sDewey)
       
    sTag = "100"   
    bool100 = CS.GetFieldUnicode(sTag, 2, sNameTitle)
+   
    If bool100 = False Then
       CS.GetFieldUnicode sTag, 1, sNameTitle
    End If
@@ -910,7 +936,7 @@ Sub Diacritics(sNameTitle)
          Case Chr(178), Chr(162), Chr(188), Chr(172)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "o" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
          'Turkish i without dot
-         Case Chr(183)
+         Case Chr(184)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "i" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
          'u with hook
          Case Chr(189), Chr(173)
@@ -1420,11 +1446,6 @@ FormCheck:
       If InStr(sFields, "DVD") = 0 And InStr(sFields, "videodisc") = 0 Then
          MsgBox "FORMAT conflict: record seems to indicate a different material type than DVD. Please verify your selection."
       End If
-   End If
-
-CutterCheck:
-   If InStr("0123456789", sCutter) <> 0 Then
-      MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spell out number in the language of the cataloged material."
    End If
    
 LangCheck:
