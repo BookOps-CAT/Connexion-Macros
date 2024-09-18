@@ -3,10 +3,11 @@
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 
-'v3.3.0 (09-17-2024):
+'v3.3.0 (09-18-2024):
 '  * adds fill character (Chr(252)) in lieu of empty or digits in the cutter for non-visual materials (DVDs, BluRay)
 '  * fixes dotles i handling by replacing it with uppercase i
 '  * fixes READALONG Sierra Material Type code (5)
+'  * adds handling of incorrectly coded characters in 100, 110, 245, and 6xx fields
 'v3.2.1 (02-06-2023):
 '  * fixes invalid cutters consisting of numbers in print materials and visual non-fic
 'v3.2.0 (10-25-2022):
@@ -71,8 +72,9 @@ Option Explicit
 
 Declare Function Dewey(a, sCallType)
 Declare Function HasIllegalCutter(sCutter)
+Declare Function Normalized(sNameTitle, sTag)
 Declare Sub LocalDewey(s082, sCallType)
-Declare Sub ElemArray(sElemArr, n100, n600)
+Declare Sub ElemArray(sElemArr, sCallType)
 Declare Sub ElemArrayChoice(sElemArr, sNameChoice, n600)
 Declare Sub Diacritics(sNameTitle)
 Declare Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
@@ -280,8 +282,6 @@ Sub Main
          sFormatPrefix = Chr(223) & "f " & sFormat(dCallNum.sFormat) & " "
       End If
       
-      Call ElemArray(sElemArr, n100, n600)
-      
 '  define the remainder of 948 field
       s948 = "948  " & sAudnLangPrefix & sFormatPrefix
       Select Case dCallNum.Type
@@ -335,6 +335,9 @@ Sub Main
             s948 = s948 & Chr(223) & "a TV"
       End Select
       
+      'complete creation of sElemArr
+      Call ElemArray(sElemArr, sCallType)
+      
       Call Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
       s948 = s948 & sCutter
       
@@ -385,20 +388,19 @@ Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
    Dim sLastChr$, sMainEntry$
    Dim start_point, end_point As Integer
    
-
    'find main entry 
-   If InStr(sElemArr, "100: ") <> 0 Then
+   If InStr(sElemArr, "100: " & Chr(252)) = 0 Then
       start_point = InStr(sElemArr, "100: ")
       sTemp = Mid(sElemArr, start_point)
       end_point = InStr(sTemp, Chr(9))
       sMainEntry = Left(sTemp, end_point - 1)
-   ElseIf InStr(sElemArr, "110: ") <> 0 Then
-      start_point = InStr(sElemArr, "110: ")
+   ElseIf InStr(sElemArr, "110: " & Chr(252)) = 0 Then
+      start_point = InStr(sElemArr, "110:")
       sTemp = Mid(sElemArr, start_point)
       end_point = InStr(sTemp, Chr(9))
       sMainEntry = Left(sTemp, end_point - 1)
    Else
-      If InStr(sElemArr, "245: ") <> 0 Then
+      If InStr(sElemArr, "245: " & Chr(252)) = 0 Then
          start_point = InStr(sElemArr, "245: ")
          sTemp = Mid(sElemArr, start_point)
          end_point = InStr(sTemp, Chr(9))
@@ -442,7 +444,7 @@ Rule1:
    
    ElseIf Left(sMainEntry, 3) = "245" Then
       sCutter = Mid(sMainEntry, 6, 1)
-      If HasIllegalCutter(sCutter) = 1 Then
+      If HasIllegalCutter(sCutter) = TRUE Then
          sCutter = Chr(252)
       End If
    End If
@@ -452,9 +454,10 @@ Rule1:
 
 Rule2:
    'dew,den: first letter of main entry
-   sCutter = Mid(sMainEntry, 6, 1)
-   If HasIllegalCutter(sCutter) = 1 Then
+   If HasIllegalCutter(sMainEntry) = TRUE Then
       sCutter = Chr(252)
+   Else 
+      sCutter = Mid(sMainEntry, 6, 1)
    End If
    sCutter = " " & Chr(223) & "c " & sCutter
    Goto Done
@@ -514,61 +517,131 @@ Rule5:
 Done:
 End Sub
 
-'########################################################################
+'########################################################
 
-Sub ElemArray(sElemArr, n100, n600)
+Function Normalized(sNameTitle, sTag)
+   'Checks if Unicode is present and shows warning or adds fill character for empty strings.
+   'Activates Diacritics routine.
+   
+   Dim Indicator
+
+   If InStr(sNameTitle, "&#") <> 0 Then
+      MsgBox "Field " & Left(sNameTitle, 3) & " includes a possibly incorrectly coded character (see &#x code). Please replace with ALA diacritics: '" & Mid(sNameTitle, 6) &  "'" 
+      Normalized = sTag & ": " & Chr(252)
+   ElseIf sNameTitle = "" Then
+      Normalized = sTag & ": " & Chr(252)
+   Else
+      Indicator = Mid(sNameTitle,5,1)
+      If Indicator = "0" Or Indicator = " " Then
+         lt$ = sTag & ": "
+         rt$ = Mid(sNameTitle, 6, 30)
+         sNameTitle = lt$ + rt$
+      Else
+         lt$ = sTag & ": "
+         rt$ = Mid(sNameTitle, 6 + Indicator, 10) 'is this 10 a correct limitation? is title cutter being shortened for DVD by this?
+         sNameTitle = lt$ + rt$
+      End If
+      
+      If InStr(sNameTitle, Chr(223) & "e") Then
+         place = InStr(sNameTitle, Chr(223) & "e")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "d") Then
+         place = InStr(sNameTitle, Chr(223) & "d")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "c") Then
+         place = InStr(sNameTitle, Chr(223) & "c")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "v") Then
+         place = InStr(sNameTitle, Chr(223) & "v")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      Do While InStr(sNameTitle, ",")
+         place = InStr(sNameTitle, ",")
+         sNameTitle = RTrim(Left(sNameTitle, place - 1))
+      Loop
+      Do While InStr(sNameTitle, Chr(223))
+         place = InStr(sNameTitle, Chr(223))
+         lt$ = Left(sNameTitle, place-2)
+         rt$ = Mid(sNameTitle, place+2)
+         sNameTitle = lt$ + rt$
+      Loop
+      Do While InStr(sNameTitle, ".")
+         place = InStr(sNameTitle, ".")
+         lt$ = Left(sNameTitle, place-1)
+         rt$ = Mid(sNameTitle, place+1)
+         sNameTitle = lt$ + rt$
+      Loop
+      
+      Call Diacritics(sNameTitle)
+      sNameTitle = UCase(sNameTitle)
+      Normalized = sNameTitle
+
+   End If
+
+End Function
+
+'################################################################
+
+Sub ElemArray(sElemArr, sCallType)
 'gather elements of the record that may be used in call number   
    Dim CS as Object
    On Error Resume Next
    Set CS  = GetObject(,"Connex.Client")
    On Error GoTo 0
 
-   Dim sNameTitle$, sIndicator
-   Dim sFields() As String
-   Dim n, m As Integer
+   Dim sNameTitle$
+   Dim i As Integer
+   Dim bool
+
+   'linked fields with Non-Latin script are displayed first,
+   'they should be ignored for cuttering purposes;
+   'occasionally primary Latin script (MARC-8) will have a unicode-encoded
+   'character if it is not supported by MARC-8 (for example African inverted e - see #1163881264)
+   'and in such situations CutterArray should display a warning but allow to use an element for cuttering
+      
+   bool = CS.GetFieldUnicode("100", 2, sNameTitle)
+      If bool = False Then
+      CS.GetFieldUnicode "100", 1, sNameTitle
+   End If
+   sNameTitle = Normalized(sNameTitle, "100")
+   sElemArr = sElemArr & sNameTitle & Chr(9)
    
-   ReDim sFields(3)
-      sFields(0) = "100"
-      sFields(1) = "110"
-      sFields(2) = "245"
-      sFields(3) = "600"
- 
-   n100 = 0
-   n600 = 0
-   For n = 0 To 3
-      m = 1
-      Do While CS.GetFieldUnicode(sFields(n), m, sNameTitle)
-         If InStr(sNameTitle, "&#") = 0 Then
-            sIndicator = Mid(sNameTitle, 5, 1)
-            If n = 0 Then
-               n100 = 1
-               sNameTitle = Mid(sNameTitle, 6)
-            ElseIf n = 1 Then
-               'EDIT HERE
-               sNameTitle = Mid(sNameTitle, 6)
-            ElseIf n = 2 Then
-               If sIndicator = "0" Or sIndicator = " " Then
-                  sNameTitle = Mid(sNameTitle, 6)
-               Else
-                  sNameTitle = Mid(sNameTitle, 6 + sIndicator)
-               End If
-            ElseIf n = 3 Then
-               If sIndicator = "0" Then
-                  sNameTitle = Mid(sNameTitle, 6)
-                  n600 = n600 + 1
-               Else
-                  Goto NextOccurance
-               End If
-            End If
-            Call Diacritics(sNameTitle)
-            sElemArr = sElemArr & sFields(n) & ": " & sNameTitle & Chr(9)
+   bool = CS.GetFieldUnicode("110", 2, sNameTitle)
+   If bool = False Then
+      CS.GetFieldUnicode "110", 1, sNameTitle
+   End If
+   sNameTitle = Normalized(sNameTitle, "110")
+   sElemArr = sElemArr & sNameTitle & Chr(9)
+   
+   bool = CS.GetFieldUnicode("245", 2, sNameTitle)
+   If bool = False Then
+         CS.GetFieldUnicode "245", 1, sNameTitle
+   End If
+   sNameTitle = Normalized(sNameTitle, "245")
+   sElemArr = sElemArr & sNameTitle & Chr(9)
+
+   
+   If sCallType = "des" Or sCallType = "bio" Then
+      i = 1
+      Do While CS.GetFieldUnicode("600", i, sNameTitle)
+         If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
+            sNameTitle = Normalized(sNameTitle, "600")
+            sElemArr = sElemArr & sNameTitle & Chr(9)
          End If
-NextOccurance:
-         m = m + 1 
-      Loop      
-   Next n
-    
-End Sub
+         i = i + 1
+      Loop
+  End If
+   
+End Sub  
+   
+
 
 '########################################################################
 
@@ -739,11 +812,11 @@ End Function
 
 Function HasIllegalCutter(sCutter)
 
-   If InStr(0123456789, sCutter) <> 0 Then
+   If InStr("0123456789", sCutter) <> 0 Then
       MsgBox "INCORRECT call number: a cutter can not consist of a digit. Please use first letter of spelled out number in the language of the cataloged material."
-      HasIllegalCutter = 1
+      HasIllegalCutter = TRUE
    Else
-      HasIllegalCutter = 0
+      HasIllegalCutter = FALSE
    End If
 
 End Function
@@ -1043,67 +1116,7 @@ End Sub
 
 Sub Diacritics(sNameTitle)
 'removes diacritic marks and other unwanted characters from a string
-   Dim CheckChar$, EntryType$
-   
-   EntryType = Left(sNameTitle,3)
-   If EntryType = "100" Or EntryType = "600" Then
-      If InStr(sNameTitle, Chr(223) & "e") <> 0 Then
-         place = InStr(sNameTitle, Chr(223) & "e")
-         sNameTitle = Left(sNameTitle, place-1)
-         sNameTitle = RTrim(sNameTitle)
-      End If
-      If InStr(sNameTitle, Chr(223) & "d") <> 0 Then
-         place = InStr(sNameTitle, Chr(223) & "d")
-         sNameTitle = Left(sNameTitle, place-1)
-         sNameTitle = RTrim(sNameTitle)
-      End If
-      If InStr(sNameTitle, Chr(223) & "q") <> 0 Then
-         place = InStr(sNameTitle, Chr(223) & "q")
-         sNameTitle = Left(sNameTitle, place-1)
-         sNameTitle = RTrim(sNameTitle)
-      End If
-      If InStr(sNameTitle, Chr(223) & "c") <> 0 Then
-         place = InStr(sNameTitle, Chr(223) & "c")
-         sNameTitle = Left(sNameTitle, place-1)
-         sNameTitle = RTrim(sNameTitle)
-      End If
-      If InStr(sNameTitle, Chr(223) & "x") <> 0 Then
-         place = InStr(sNameTitle, Chr(223) & "x")
-         sNameTitle = Left(sNameTitle, place-1)
-         sNameTitle = RTrim(sNameTitle)
-      End If
-      If InStr(sNameTitle, Chr(223) & "t") <> 0 Then
-         place = InStr(sNameTitle, Chr(223) & "t")
-         sNameTitle = Left(sNameTitle, place-1)
-         sNameTitle = RTrim(sNameTitle)
-      End If
-      If InStr(sNameTitle, Chr(223) & "v") <> 0 Then
-         place = InStr(sNameTitle, Chr(223) & "v")
-         sNameTitle = Left(sNameTitle, place-1)
-         sNameTitle = RTrim(sNameTitle)
-      End If
-      If InStr(sNameTitle, Chr(223) & "z") <> 0 Then
-         place = InStr(sNameTitle, Chr(223) & "z")
-         sNameTitle = Left(sNameTitle, place-1)
-         sNameTitle = RTrim(sNameTitle)
-      End If
-
-      Do While InStr(sNameTitle, Chr(223))
-         place = InStr(sNameTitle, Chr(223))
-         lt$ = Left(sNameTitle, place-2)
-         rt$ = Mid(sNameTitle, place+2)
-         sNameTitle = lt$ + rt$
-      Loop
-      sNameTitle = RTrim(Left(sNameTitle, 30))
-   Else
-   'title/corporate main entry cases
-      place = InStr(sNameTitle, Chr(223))
-      If place <> 0 Then
-         sNameTitle = Left(sNameTitle, place-1)
-         sNameTitle = RTrim(sNameTitle)
-      End If
-      sNameTitle = RTrim(Left(sNameTitle, 30))
-   End If
+   Dim CheckChar$
    
    i = 1
    While i <= Len(sNameTitle)
@@ -1152,12 +1165,7 @@ Sub Diacritics(sNameTitle)
       End Select
       i = i + 1   
    Wend
-   sNameTitle = UCase(sNameTitle)
-'  update v.2.5.8: period should not be allowed as the last element of cutter
-'                 - a bug introduced in v. 2.5.6 when period was allowed in DVD call numbers 
-   If Right(sNameTitle, 1) = "." Then
-      sNameTitle = Left(sNameTitle, Len(sNameTitle) - 1)
-   End If
+
 End Sub
 
 '########################################################################
