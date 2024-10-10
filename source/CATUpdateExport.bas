@@ -2,8 +2,9 @@
 'MacroDescription:Updates OCLC holdings then exports a bibliographic record.
 'Version: 1.10
 
-'v1.10 (2024-08-29)
+'v1.10 (2024-10-10)
 '  * adds export protection for incomplete call numbers that include a fill character (Chr(252))
+'  * adds barcode validation for RL records
 'v1.9 (2024-06-20)
 ' * permits 653 for SCIPIO records (042 scipio)
 'v1.8 (2024-02-26)
@@ -26,6 +27,7 @@ Option Explicit
 
 Declare Function PreferedLoadTable(sBLvl)
 Declare Function HasCompleteCallNum(sCallNum)
+Declare Function IsValidBarcode(sBarcode)
 Declare Sub CleanSubjectTags()
 
 '################################
@@ -59,6 +61,24 @@ End Function
 
 '##############################
 
+Function IsValidBarcode(sBarcode)
+
+   sBarcode = Trim(sBarcode)
+
+   If Len(sBarcode) <> 14 Then
+      IsValidBarcode = FALSE
+   ElseIf Left(sBarcode, 4) <> "3343" Then
+      IsValidBarcode = FALSE
+   ElseIf IsNumeric(sBarcode) = FALSE Then
+      IsValidBarcode = FALSE
+   Else
+      IsValidBarcode = TRUE
+   End If
+
+End Function
+
+'##############################
+
 Sub CleanSubjectTags()
 
    Dim CS As Object
@@ -81,7 +101,7 @@ Sub CleanSubjectTags()
       'MsgBox n & ", " & sTag$
       If Left(sTag$, 1) = "6" Then
          If InStr("653", Mid(sTag$, 1, 3)) <> 0 Then
-            If aBool = TRUE And InStr(sAuthCode$, "scipio") Then
+            If aBool = TRUE And InStr(sAuthCode$, "scipio") <> 0 Then
                'allow SCIPIO 653s
             Else
                DelArr(n) = n
@@ -132,7 +152,7 @@ Sub Main
    Dim CS As Object
    Set CS  = GetObject(,"Connex.Client")
 
-   Dim sErrorList, sValue, s949, lt, rt, sLoadCommand, sBLvl, sPreferedLoadTable, sCallNum, sCallNumTag As String
+   Dim sBarcode, sErrorList, sValue, s949, lt, rt, sLoadCommand, sBLvl, sPreferedLoadTable, sCallNum, sCallNumTag As String
    Dim nIndex, n, nPos1, nPos2, nNumErrors As Integer
    Dim bool049, bool949, fieldMissing
 
@@ -150,6 +170,23 @@ Sub Main
          If InStr(sValue, "NYPP") <> 0 Then
             CS.Reformat
             CS.GetFixedField "BLvl", sBLvl
+            
+            'check if valid barcode
+            n = 1
+            Do While CS.GetField("949", n, sValue)
+               If Mid(sValue, 5, 1) = "1" Then
+            
+                  lt = Mid(sValue, InStr(sValue, Chr(223) & "i") + 2)
+                  sBarcode = Left(lt, InStr(lt, Chr(223)) - 1)
+              
+                  If IsValidBarcode(sBarcode) = FALSE Then
+                     MsgBox "Invalid item barcode in the occurrence #" & n & " of the 949 field. Please correct and export again. Exiting..."
+                     GoTo Done
+                  End If
+               
+               End If
+               n = n + 1
+            Loop
             
             
             sCallNumTag = "948"

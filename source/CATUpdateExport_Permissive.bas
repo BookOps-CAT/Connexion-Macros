@@ -26,6 +26,8 @@
 '  + RDAFNM
 '  + TEPT
 
+'v1.4 2024-10-10
+'  * adds barcode validation for RL records
 'v1.3 2024-06-20
 '  * allows 653s if 042 authorization code has SCIPIO (art & rare books sales/auction catalogs)
 'v1.2 2024-05-01
@@ -40,6 +42,7 @@ Option Explicit
 
 Declare Function PreferedLoadTable(sBLvl)
 Declare Sub CleanSubjectTags()
+Declare Function IsValidBarcode(sBarcode)
 
 '###############
 
@@ -59,6 +62,24 @@ Function PreferedLoadTable(sBLvl)
 End Function
 
 '####################
+
+Function IsValidBarcode(sBarcode)
+
+   sBarcode = Trim(sBarcode)
+
+   If Len(sBarcode) <> 14 Then
+      IsValidBarcode = FALSE
+   ElseIf Left(sBarcode, 4) <> "3343" Then
+      IsValidBarcode = FALSE
+   ElseIf IsNumeric(sBarcode) = FALSE Then
+      IsValidBarcode = FALSE
+   Else
+      IsValidBarcode = TRUE
+   End If
+
+End Function
+
+'##############################
 
 Sub CleanSubjectTags()
 
@@ -144,7 +165,7 @@ Sub Main
    Dim CS As Object
    Set CS  = GetObject(,"Connex.Client")
 
-   Dim sErrorList, sValue, s949, lt, rt, sLoadCommand, sBLvl, sPreferedLoadTable As String
+   Dim sBarcode, sErrorList, sValue, s949, lt, rt, sLoadCommand, sBLvl, sPreferedLoadTable As String
    Dim nIndex, n, nPos1, nPos2, nNumErrors As Integer
    Dim bool049, bool949, fieldMissing
 
@@ -162,6 +183,23 @@ Sub Main
          If InStr(sValue, "NYPP") <> 0 Then
             CS.Reformat
             CS.GetFixedField "BLvl", sBLvl
+            
+            'check if valid barcode
+            n = 1
+            Do While CS.GetField("949", n, sValue)
+               If Mid(sValue, 5, 1) = "1" Then
+            
+                  lt = Mid(sValue, InStr(sValue, Chr(223) & "i") + 2)
+                  sBarcode = Left(lt, InStr(lt, Chr(223)) - 1)
+              
+                  If IsValidBarcode(sBarcode) = FALSE Then
+                     MsgBox "Invalid item barcode in the occurrence #" & n & " of the 949 field. Please correct and export again. Exiting..."
+                     GoTo Done
+                  End If
+               
+               End If
+               n = n + 1
+            Loop
             
             'determine correct load table
             Call PreferedLoadTable(sBLvl)
