@@ -797,7 +797,7 @@ Function Normalized(sNameTitle, sTag)
 
    End If
 
-   End Function
+End Function
 
 '########################################################
 
