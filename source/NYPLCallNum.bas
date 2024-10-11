@@ -3,7 +3,7 @@
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 
-'v3.3.0 (09-18-2024):
+'v3.3.0 (10-11-2024):
 '  * adds fill character (Chr(252)) in lieu of empty or digits in the cutter for non-visual materials (DVDs, BluRay)
 '  * fixes dotles i handling by replacing it with uppercase i
 '  * fixes READALONG Sierra Material Type code (5)
@@ -453,7 +453,7 @@ Rule1:
    Goto Done
 
 Rule2:
-   'dew,den: first letter of main entry
+   'dew: first letter of main entry
    If HasIllegalCutter(sMainEntry) = TRUE Then
       sCutter = Chr(252)
    Else 
