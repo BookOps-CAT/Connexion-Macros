@@ -8,8 +8,8 @@
 '                  "C:\Program Files (x86)\OCLC\Connexion\Program\"    to store staff initials and 4 other values that
 '                  populate default values for the next run of the macro, allowing user to apply the same template to
 '                  consecutive order records
-'Macro created by: Tomasz Kalata, BookOps
 '
+'v4.0 details (10-28-2024): added new vendor FICKS (Ficks)
 'v3.1 details (09-19-2023): relevant LPA codes changed from my to pa
 'v3.0 deails (09-21-2022): added new vendor FRN (Front)
 'v2.0 details (10-18-2021): new vendor JSTIL code added
@@ -90,7 +90,7 @@ Sub Main
          sLocation(17) = "SC"
          sLocation(18) = "SLR"
 'ZZZZZZZZZZ
-      ReDim sVendor(41)
+      ReDim sVendor(42)
          sVendor(0) = " "
          sVendor(1) = "4398"
          sVendor(2) = "ALIBR"
@@ -106,33 +106,34 @@ Sub Main
          sVendor(12) = "ENGH"
          sVendor(13) = "EUR"
          sVendor(14) = "EVP"
-         sVendor(15) = "FRN"
-         sVendor(16) = "HERIT"
-         sVendor(17) = "HOG"
-         sVendor(18) = "HRR"
-         sVendor(19) = "INC"
-         sVendor(10) = "ITR"
-         sVendor(21) = "JERUS"
-         sVendor(22) = "JSTIL"
-         sVendor(23) = "KAR"
-         sVendor(24) = "KEN"
-         sVendor(25) = "LAT" 
-         sVendor(26) = "LEXI"
-         sVendor(27) = "LNR"
-         sVendor(28) = "MDJ"
-         sVendor(29) = "MEXIC"
-         sVendor(30) = "MGENS"
-         sVendor(31) = "NESTO"
-         sVendor(32) = "NORTE"
-         sVendor(33) = "PRAGE"
-         sVendor(34) = "PVL"
-         sVendor(35) = "RETTA"
-         sVendor(36) = "SBD"
-         sVendor(37) = "SUR"
-         sVendor(38) = "TROP"
-         sVendor(39) = "WNB"
-         sVendor(40) = "YBP"
-         sVendor(41) = "UDP"
+         sVendor(15) = "FICKS"
+         sVendor(16) = "FRN"
+         sVendor(17) = "HERIT"
+         sVendor(18) = "HOG"
+         sVendor(19) = "HRR"
+         sVendor(20) = "INC"
+         sVendor(21) = "ITR"
+         sVendor(22) = "JERUS"
+         sVendor(23) = "JSTIL"
+         sVendor(24) = "KAR"
+         sVendor(25) = "KEN"
+         sVendor(26) = "LAT" 
+         sVendor(27) = "LEXI"
+         sVendor(28) = "LNR"
+         sVendor(29) = "MDJ"
+         sVendor(30) = "MEXIC"
+         sVendor(31) = "MGENS"
+         sVendor(32) = "NESTO"
+         sVendor(33) = "NORTE"
+         sVendor(34) = "PRAGE"
+         sVendor(35) = "PVL"
+         sVendor(36) = "RETTA"
+         sVendor(37) = "SBD"
+         sVendor(38) = "SUR"
+         sVendor(39) = "TROP"
+         sVendor(40) = "WNB"
+         sVendor(41) = "YBP"
+         sVendor(42) = "UDP"
               
       'read default data from text file stored in macro folder
       sFileName = "acq_data.txt"

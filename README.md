@@ -43,19 +43,19 @@ Done!
 	* [BPLCallNum.bas v3.4.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/BPLCallNum.bas): BPL call number creation macro
 	* [ToExcel.bas v1.2](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/BPLToExcel.bas): exports elements of displayed in the Connexion client record to the .xls format
 3. [NYPL.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/NYPL.mbk)
-	* [NYPLCallNum.bas v3.2.1](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/NYPLCallNum.bas): NYPL call number creation macro
+	* [NYPLCallNum.bas v3.3.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/NYPLCallNum.bas): NYPL call number creation macro
 	* [NYPLMusicCD.bas v1.5](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/NYPLMusicCD.bas): NYPL music CDs call number creation macro
 4. [CAT.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/CAT.mbk)
 	* [BackupSettings.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATBackupSettings.bas): backups Connexion client settings
 	* [BibcoEval.bas v1.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATBibcoEval.bas): evaluates and flags elements missing or incorrect for BIBCO records
-	* [UpdateExport.bas v1.9](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport.bas): updates holdings, cleans 6xxs, sets appropriate Sierra load table, and exports records to Sierra; to be used in BookOps CAT
-	* [UpdateExport_Permissive.bas v1.3](http://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport_Permissive.bas): more permissive version of `UpdateExport` macro allowing a wider range of vocabularies in 6xx fields
+	* [UpdateExport.bas v1.10](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport.bas): updates holdings, cleans 6xxs, sets appropriate Sierra load table, and exports records to Sierra; to be used in BookOps CAT
+	* [UpdateExport_Permissive.bas v1.4](http://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATUpdateExport_Permissive.bas): more permissive version of `UpdateExport` macro allowing a wider range of vocabularies in 6xx fields
 	* [ShareSave.bas v1.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATShareSave.bas)
     * [UserDual.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATNewUserDual.bas): creates dual, BPL & NYPL, profiles in the Connexion client; requires access to CATAL network drive
     * [UserNYP.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATNewUserNYP.bas): creates single NYPL Connexion client profile
     * [ValEncoding.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATValEncoding.bas): Analyzes the entire record for possible non MARC-8 encoded characters
 5. [ACQ.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/ACQ.mbk)
-	* [RLOrderRec.bas v3.2](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/ACQRLOrderRec.bas): encodes order record information in a special MARC field and exports to Sierra
+	* [RLOrderRec.bas v4.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/ACQRLOrderRec.bas): encodes order record information in a special MARC field and exports to Sierra
 6. [NewMacros.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/newMacros.mbk)
 	* [updater.bas v2.1](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/newMacrosUpdater.bas): pulls and updates local macrobooks using a network drive
 ## License
