@@ -53,6 +53,7 @@ Done!
 	* [ShareSave.bas v1.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATShareSave.bas)
     * [UserDual.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATNewUserDual.bas): creates dual, BPL & NYPL, profiles in the Connexion client; requires access to CATAL network drive
     * [UserNYP.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATNewUserNYP.bas): creates single NYPL Connexion client profile
+    * [ValEncoding.bas](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATValEncoding.bas): Analyzes the entire record for possible non MARC-8 encoded characters
 5. [ACQ.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/ACQ.mbk)
 	* [RLOrderRec.bas v3.2](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/ACQRLOrderRec.bas): encodes order record information in a special MARC field and exports to Sierra
 6. [NewMacros.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/newMacros.mbk)
