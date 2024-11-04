@@ -7,13 +7,16 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials
 
-'v.3.4.0 (09-17-2024):
+'v.3.4.0 (11-04-2024):
 '  * removes ISBNs with "Kindle" qualifier
 '  * adds fill character (Chr(252)) to missing or invalid call number elements
 '  * sets Sierra bib format to 8 for READALONGS
-'  * sets 4 digits after period limit except for 8xx
+'  * sets 4 digits after period limit except for 8xx and scores (Mu)
 '  * fixes handling of dotless i common in Turkish materials by replacing it with uppercase i
 '  * fixes duplication of ilocs in main menu
+'  * fixes an invalid warning for scores
+'  * fixes an incorrectly applied langugage prefix for Mu call numbers (scores)
+'  * adds Sierra bib format codes for scores in the 949 command line
 'v3.3.0 (02-06-2023) changes:
 '  * removal of flags for 005.258 (programming for specific operating systems), 005.3582 (apps for specific mobile devices),
 '        005.432 (specific operating systems), 005.5 (general purpose programs), 005.7585 & 005.7565 (database management systems),
@@ -61,7 +64,7 @@
 
 
 
-Declare Function Dewey(sAudn,sCallType)
+Declare Function Dewey(sAudn,sCallType, f)
 Declare Function FileDlgFunction(identifier$, action, suppvalue)
 Declare Function CleanCuttersLastDigit(s082)
 Declare Function Cutter(sCutterArr,sCallType,sBiog,sLTxt)
@@ -83,7 +86,7 @@ Sub Main
 
    If CS.ItemType = 0 or CS.ItemType = 1 or CS.ItemType = 2 or CS.ItemType = 17 Then
 
-      ' make sure all fields are reformated and subfields include required spacing      
+      ' make sure all fields are reformated and subfields include required spacing  
       CS.Reformat
       
       Dim s041$, s099$, s100$, s130$, s300$, s600$, s650$, s655$, s730$, sCallType$, sAudn$, sLang$, sRecType$, sItemForm$, sFormatPrefix$, sAudiencePrefix$, _
@@ -295,11 +298,11 @@ Sub Main
          Goto Lang
       End If
 Lang:
-      'if English material skip, if WL insert appropriate string with language code
+      'if English material or score skip, if WL insert appropriate string with language code
       sLang = UCase(sLang)
-      If sLang = "ENG" Then
+      If sLang = "ENG" Or dCallNum.sFormat = 9 Then
          boolLangPrefix = False
-         Goto AudnType:
+         GoTo AudnType
       Else
          sLangPrefix = sLang & " " & Chr(223) & "a "
          boolLangPrefix = True
@@ -323,17 +326,17 @@ CaseType:
       Case 2
       'creates call number for Dewey classification
          sCallType = "dew"
-         sDewey = Dewey(sAudn,sCallType)
+         sDewey = Dewey(sAudn,sCallType, f)
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & sDewey
       Case 3
       'creates call number for literary works by a single author (pattern: Dewey + Name)
          sCallType = "den"
-         sDewey = Dewey(sAudn,sCallType)
+         sDewey = Dewey(sAudn,sCallType, f)
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & sDewey
       Case 4
       'creates call number for Dewey with subject
          sCallType = "des"
-         sDewey = Dewey(sAudn,sCallType)
+         sDewey = Dewey(sAudn,sCallType, f)
       'check if this call number is valiable for juvenile material
          s099 = "099  " & sFormatPrefix & sLangPrefix & sAudnPrefix & sDewey
       Case 5
@@ -395,7 +398,7 @@ End Function
 
 '##############################################################
 
-Function Dewey(sAudn,sCallType)
+Function Dewey(sAudn,sCallType, f)
 'creates string with Dewey number taken from 082 field
    Dim CS as Object
    Set CS  = GetObject(,"Connex.Client")
@@ -447,7 +450,7 @@ Function Dewey(sAudn,sCallType)
       s082 = CleanCuttersLastDigit(s082)
    Else
       'with exception to 8xx limit number of digits after decimal point to 4 only
-      If Mid(s082, 6, 1) = "8" Then
+      If Mid(s082, 6, 1) = "8" Or f = 9 Then
          s082 = Mid(s082, 6, 20)
       Else
          s082 = Mid(s082,6,8)
@@ -797,7 +800,7 @@ Function Normalized(sNameTitle, sTag)
 
    End If
 
-End Function
+   End Function
 
 '########################################################
 
@@ -1321,14 +1324,14 @@ AudnCheck:
       ElseIf sAudn = "j" Then
          MsgBox "INFO: Caution advised. Record coded as broad juvenile material (fixed field Audn: j)."
       Else
-         MsgBox "AUDIENCE conflict: Record not coded as easy material (fixed field Audn). Please verify your selection."
+         MsgBox "AUDIENCE conflict: Record not coded as eas material (fixed field Audn). Please verify your selection."
       End If
    Else
       If InStr("cdefgj", sAudn) <> 0 Or sAund = "" Then
          If InStr("cj", sAudn) <> 0 And sAudn <> "" Then
             If a = 0 Then
                If InStr(s082, "[E]") <> 0 And f <> 11 Then
-                  MsgBox "AUDIENCE conflict: The material is classed as easy fiction (082 field - [E]). Please verify your selection."
+                  MsgBox "AUDIENCE conflict: The material is classed as eas fiction (082 field - [E]). Please verify your selection."
                Else
                   Goto LitCheck
                End If
@@ -1409,7 +1412,7 @@ FormCheck:
          MsgBox "FORMAT conflict: bibliographical record type is not for visual materials. Please verify your selection."
       End If
    ElseIf f = 9 Then
-      If sRecType <> "c" Or sRecType <> "d" Then
+      If InStr("cd", sRecType) = 0 Then
          MsgBox "FORMAT conflict: bibliographical record type is not for notated music. Please verify your selection."
       End If
    ElseIf f = 10 Then
@@ -1451,11 +1454,19 @@ FormCheck:
 LangCheck:
 
    'language prefix validation
-   'check if material is coded be in more then one language
+   'check if material is coded in more then one language
    
    If s041 <> "" Then
-   
-      sLangs = UCase(Mid(s041, 6, 3))
+
+      If Mid(s041, 6, 1) = Chr(223) Then
+         'after reformating of the record triggered at the very begining of the macro routine
+         'any explicitly coded subfields "a" at the start of the field are removed leaving
+         'other fields, for example "g" - common in scores
+         sLangs = ""
+      Else
+         sLangs = UCase(Mid(s041, 6, 3))
+      End If
+      
       sTemp = Mid(s041, 6)
       
       Do While InStr(sTemp, Chr(223) & "a") <> 0:
@@ -1475,13 +1486,19 @@ LangCheck:
       
       If boolLangPrefix = False Then
  
-         If sLangs <> "" And InStr(sLangs, sLang) = 0 Then
-         
-            MsgBox "WARNING: language prefix may be missing in the call number. The 041 tag indicates multiple languages present."
+         If sLangs <> "" Then
+
+            If f = 9 Then
+               'no warning for scores if eng or zxx, finish
+
+            'other formats
+            ElseIf InStr(sLangs, sLang) = 0 Then 
+               MsgBox "WARNING: language prefix may be missing in the call number. The 041 tag indicates multiple languages present."
       
-         ElseIf sLangs <> "" And sLang = "ENG" And sLangs <> sLang Then
-         
-            MsgBox "WARNING: language prefix may be missing in the call number. The 041 tag indicates multiple languages present."
+            ElseIf sLang = "ENG" And sLangs <> sLang Then
+               MsgBox "WARNING: language prefix may be missing in the call number. The 041 tag indicates multiple languages present."
+
+            End If
       
          End If
       End If
@@ -1507,25 +1524,30 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    sDVD = "b2=h;"
    sCD = "b2=i;"
    sReadalong = "b2=8;"
+   sScore = "b2=c;"
+   sMsScore = "b2=d;"
 
-   
-   If sRecType = "a" Then
+ 
+   If f = 9 Then
+      'scores
+      If sRecType = "c" Then
+         SierraCode = s949 & sScore & sOverlay
+      ElseIf sRecType = "d" Then
+         SierraCode = s949 & sMsScore & sOverlay
+      End If
+   ElseIf f = 11 Then
+      SierraCode = s949 & sReadalong & sOverlay
+   ElseIf sRecType = "a" Then
       If sItemForm = "d" Then
          MsgBox "INFO: Large print record. Setting Sierra format code to large print."
          SierraCode = s949 & sLargePrint & sOverlay
-      ElseIf f = 11 Then
-         SierraCode = s949 & sReadalong & sOverlay
       Else
          SierraCode = s949 & sOverlay
       End If
    ElseIf sRecType = "g" Then
       SierraCode = s949 & sDVD & sOverlay
    ElseIf sRecType = "i" Then
-      If f = 11 Then
-         SierraCode = s949 & sReadalong & sOverlay
-      Else
-         SierraCode = s949 & sCD & sOverlay
-      End If
+      SierraCode = s949 & sCD & sOverlay
    End If
    
    CS.SetField 1, SierraCode
@@ -1675,4 +1697,3 @@ Sub InsertCallNum(s099,sRecType,sItemForm,sLang,sAudn,f,sInitials)
    CS.EndRecord
 
 End Sub
-
