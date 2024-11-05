@@ -4,7 +4,7 @@
 
 'v1.10 (2024-10-10)
 '  * adds export protection for incomplete call numbers that include a fill character (Chr(252))
-'  * adds barcode validation for RL records
+'  * adds barcode validation for NYPL RL and BL records
 'v1.9 (2024-06-20)
 ' * permits 653 for SCIPIO records (042 scipio)
 'v1.8 (2024-02-26)
@@ -27,7 +27,7 @@ Option Explicit
 
 Declare Function PreferedLoadTable(sBLvl)
 Declare Function HasCompleteCallNum(sCallNum)
-Declare Function IsValidBarcode(sBarcode)
+Declare Function IsValidBarcode(sBarcode, sCollection)
 Declare Sub CleanSubjectTags()
 
 '################################
@@ -61,18 +61,27 @@ End Function
 
 '##############################
 
-Function IsValidBarcode(sBarcode)
+Function IsValidBarcode(sBarcode, sCollection)
 
    sBarcode = Trim(sBarcode)
+   IsValidBarcode = TRUE
 
    If Len(sBarcode) <> 14 Then
       IsValidBarcode = FALSE
-   ElseIf Left(sBarcode, 4) <> "3343" Then
+   End If
+   
+   If sCollection = "RL" Then
+      If Left(sBarcode, 4) <> "3343" Then
+         IsValidBarcode = FALSE
+      End If
+   ElseIf sCollection = "BL" Then
+      If Left(sBarcode, 4) <> "3333" Then
+         IsValidBarcode = FALSE
+      End If
+   End If
+   
+   If IsNumeric(sBarcode) = FALSE Then
       IsValidBarcode = FALSE
-   ElseIf IsNumeric(sBarcode) = FALSE Then
-      IsValidBarcode = FALSE
-   Else
-      IsValidBarcode = TRUE
    End If
 
 End Function
@@ -152,7 +161,7 @@ Sub Main
    Dim CS As Object
    Set CS  = GetObject(,"Connex.Client")
 
-   Dim sBarcode, sErrorList, sValue, s949, lt, rt, sLoadCommand, sBLvl, sPreferedLoadTable, sCallNum, sCallNumTag As String
+   Dim sBarcode, sErrorList, sValue, s949, lt, rt, sLoadCommand, sBLvl, sPreferedLoadTable, sCallNum, sCallNumTag, sCollection As String
    Dim nIndex, n, nPos1, nPos2, nNumErrors As Integer
    Dim bool049, bool949, fieldMissing
 
@@ -176,10 +185,20 @@ Sub Main
             Do While CS.GetField("949", n, sValue)
                If Mid(sValue, 5, 1) = "1" Then
             
+                  If InStr(sValue, "CATRL") <> 0 Then
+                     sCollection = "RL"
+                  Else
+                     sCollection = "BL"
+                  End If
+                  
                   lt = Mid(sValue, InStr(sValue, Chr(223) & "i") + 2)
-                  sBarcode = Left(lt, InStr(lt, Chr(223)) - 1)
+                  If InStr(lt, Chr(223)) <> 0 Then
+                     sBarcode = Left(lt, InStr(lt, Chr(223)) - 1)
+                  Else
+                     sBarcode = lt
+                  End If
               
-                  If IsValidBarcode(sBarcode) = FALSE Then
+                  If IsValidBarcode(sBarcode, sCollection) = FALSE Then
                      MsgBox "Invalid item barcode in the occurrence #" & n & " of the 949 field. Please correct and export again. Exiting..."
                      GoTo Done
                   End If

@@ -69,7 +69,7 @@ Function IsValidBarcode(sBarcode)
 
    If Len(sBarcode) <> 14 Then
       IsValidBarcode = FALSE
-   ElseIf Left(sBarcode, 4) <> "3343" Then
+   ElseIf Left(sBarcode, 4) <> "3343" And Left(sBarcode, 4) <> "3333" <> 0 Then
       IsValidBarcode = FALSE
    ElseIf IsNumeric(sBarcode) = FALSE Then
       IsValidBarcode = FALSE
@@ -190,7 +190,11 @@ Sub Main
                If Mid(sValue, 5, 1) = "1" Then
             
                   lt = Mid(sValue, InStr(sValue, Chr(223) & "i") + 2)
-                  sBarcode = Left(lt, InStr(lt, Chr(223)) - 1)
+                  If InStr(lt, Chr(223)) <> 0 Then
+                     sBarcode = Left(lt, InStr(lt, Chr(223)) - 1)
+                  Else
+                     sBarcode = lt
+                  End If
               
                   If IsValidBarcode(sBarcode) = FALSE Then
                      MsgBox "Invalid item barcode in the occurrence #" & n & " of the 949 field. Please correct and export again. Exiting..."
