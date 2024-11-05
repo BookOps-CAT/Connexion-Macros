@@ -193,6 +193,7 @@ Sub Main
                   If InStr(lt, Chr(223)) <> 0 Then
                      sBarcode = Left(lt, InStr(lt, Chr(223)) - 1)
                   Else
+                     'barcode as the last subfield
                      sBarcode = lt
                   End If
               
