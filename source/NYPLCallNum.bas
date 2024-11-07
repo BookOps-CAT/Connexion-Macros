@@ -74,7 +74,7 @@ Declare Function Dewey(a, sCallType)
 Declare Function HasIllegalCutter(sCutter)
 Declare Function Normalized(sNameTitle, sTag)
 Declare Sub LocalDewey(s082, sCallType)
-Declare Sub ElemArray(sElemArr, sCallType)
+Declare Sub ElemArray(sElemArr, n600)
 Declare Sub ElemArrayChoice(sElemArr, sNameChoice, n600)
 Declare Sub Diacritics(sNameTitle)
 Declare Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
@@ -283,6 +283,10 @@ Sub Main
       End If
       
 '  define the remainder of 948 field
+   
+      'create sElemArr
+      Call ElemArray(sElemArr, n600)
+      
       s948 = "948  " & sAudnLangPrefix & sFormatPrefix
       Select Case dCallNum.Type
          Case 0
@@ -334,9 +338,6 @@ Sub Main
             sCallType = "tvs"
             s948 = s948 & Chr(223) & "a TV"
       End Select
-      
-      'complete creation of sElemArr
-      Call ElemArray(sElemArr, sCallType)
       
       Call Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
       s948 = s948 & sCutter
@@ -589,7 +590,7 @@ End Function
 
 '################################################################
 
-Sub ElemArray(sElemArr, sCallType)
+Sub ElemArray(sElemArr, n600)
 'gather elements of the record that may be used in call number   
    Dim CS as Object
    On Error Resume Next
@@ -597,7 +598,6 @@ Sub ElemArray(sElemArr, sCallType)
    On Error GoTo 0
 
    Dim sNameTitle$
-   Dim i, n600 As Integer
    Dim bool
 
    'linked fields with Non-Latin script are displayed first,
@@ -627,23 +627,18 @@ Sub ElemArray(sElemArr, sCallType)
    sNameTitle = Normalized(sNameTitle, "245")
    sElemArr = sElemArr & sNameTitle & Chr(9)
 
-   
-   If sCallType = "des" Or sCallType = "bio" Then
-      bool = CS.GetFieldUnicode("600", 1, sNameTitle)
-      If bool = TRUE Then
-         n600 = 1
-         Do While CS.GetFieldUnicode("600", n600, sNameTitle)
-            If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
-               sNameTitle = Normalized(sNameTitle, "600")
-               sElemArr = sElemArr & sNameTitle & Chr(9)
-            End If
-            n600 = n600 + 1
-         Loop
-      Else
-         n600 = 0
-      End If
-
-  End If
+   n600 = 0
+   bool = CS.GetFieldUnicode("600", 1, sNameTitle)
+   If bool = TRUE Then
+      n600 = 1
+      Do While CS.GetFieldUnicode("600", n600, sNameTitle)
+         If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
+            sNameTitle = Normalized(sNameTitle, "600")
+            sElemArr = sElemArr & sNameTitle & Chr(9)
+         End If
+         n600 = n600 + 1
+      Loop
+   End If
    
 End Sub  
    
