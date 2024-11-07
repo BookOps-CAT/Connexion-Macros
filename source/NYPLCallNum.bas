@@ -597,7 +597,7 @@ Sub ElemArray(sElemArr, sCallType)
    On Error GoTo 0
 
    Dim sNameTitle$
-   Dim i As Integer
+   Dim i, n600 As Integer
    Dim bool
 
    'linked fields with Non-Latin script are displayed first,
@@ -629,14 +629,20 @@ Sub ElemArray(sElemArr, sCallType)
 
    
    If sCallType = "des" Or sCallType = "bio" Then
-      i = 1
-      Do While CS.GetFieldUnicode("600", i, sNameTitle)
-         If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
-            sNameTitle = Normalized(sNameTitle, "600")
-            sElemArr = sElemArr & sNameTitle & Chr(9)
-         End If
-         i = i + 1
-      Loop
+      bool = CS.GetFieldUnicode("600", 1, sNameTitle)
+      If bool = TRUE Then
+         n600 = 1
+         Do While CS.GetFieldUnicode("600", n600, sNameTitle)
+            If InStr(sNameTitle, "&#") = 0 And Mid(sNameTitle, 5, 1) = "0" Then
+               sNameTitle = Normalized(sNameTitle, "600")
+               sElemArr = sElemArr & sNameTitle & Chr(9)
+            End If
+            n600 = n600 + 1
+         Loop
+      Else
+         n600 = 0
+      End If
+
   End If
    
 End Sub  
