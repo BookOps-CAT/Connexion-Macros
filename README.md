@@ -42,7 +42,7 @@ After copying the macrobooks to `C:/Users/[your-name]/AppData/Roaming/OCLC/Conne
 ### Create New User Profile
 When setting up the Connexion Client for the first time, users will need to create a new user profile. Users can do this using the 
 
-![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/tree/readme-update/media/manage-macros.png)
+![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/blob/readme-update/media/manage-macros.png)
 
 
 1. Open Connexion and navigate to Tools > Macros > Manage
@@ -52,7 +52,7 @@ When setting up the Connexion Client for the first time, users will need to crea
 ### Mapping Macros to User Tools
 After setting up your user profile(s) you can map macros to shortcuts that on your toolbar.
 
-![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/tree/readme-update/media/user-tools.png)
+![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/blob/readme-update/media/user-tools.png)
 
 1. Open Connexion and navigate to Tools > User Tools > Manage
 2. Select the Macro button at the top of the pop up window. A list of available macros should appear on the left side of the window.
