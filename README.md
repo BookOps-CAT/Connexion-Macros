@@ -40,7 +40,7 @@ Done!
 After copying the macrobooks to `C:/Users/[your-name]/AppData/Roaming/OCLC/Connex/Macros/` you can set up your macros in ConnexionClient and map them to user tools.
 
 ### Create New User Profile
-When setting up the Connexion Client for the first time, users will need to create a new user profile. CAT staff onsite at LSC can create NYPL or dual NYPL/BPL profiles by running the NewUserNYP or NewUserDual macro directly from the Macro window in the client. Users from other departments or CAT staff working offsite will not be able to create a profile using this process.
+When setting up the Connexion Client for the first time, users will need to create a new user profile. CAT staff onsite at LSC can create NYPL or dual NYPL/BPL profiles by running the NewUserNYP or NewUserDual macro directly from the Macro window in the client. Users from other departments or CAT staff working offsite will not be able to create a profile using this process. The gateway configuration file is `Connects.ini` and is available on the CATAL shared drive under `CATAL/Connex/onboarding/dual` or `CATAL/Connex/onboarding/nypl-only`.
 
 ![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/media/manage-macros.png)
 
