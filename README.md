@@ -50,7 +50,7 @@ When setting up the Connexion Client for the first time, users will need to crea
 3. After selecting the macro, click run. 
 
 ### Mapping Macros to User Tools
-After setting up a user profile(s) users can map macros to shortcuts and add them to the toolbar.
+After setting up a profile users can map macros to shortcuts and add them to the toolbar.
 
 ![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/media/user-tools.png)
 
