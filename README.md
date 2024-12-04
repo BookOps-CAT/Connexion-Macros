@@ -3,7 +3,7 @@ A repository of BookOps Cataloging Department macros for the OCLC Connexion clie
 
 ## Installation
 ### Easy Way
-If you have access to the CAT department shared drive (S: drive) you can find the macrobook files in S:/CATAL/Connex/macros and copy the files from there. Otherwise to install macros, find the macrobook you are interested in the [`Connexion-Macros/macrobooks/` folder](https://github.com/BookOps-CAT/Connexion-Macros/tree/main/macrobooks), click on it, and download it to your computer.
+If you have access to the CAT department shared drive (S: drive) you can find the macrobook files in S:/CATAL/Connex/macros and copy the files from there. Otherwise to install macros, find the macrobook you wish to install in the [`Connexion-Macros/macrobooks/` folder](https://github.com/BookOps-CAT/Connexion-Macros/tree/main/macrobooks), click on it, and download it to your computer.
 
 Example, downloading the `CAT macrobook` which includes UpdateExport, BackupSettings, and other macros:
 ![macrobook-download-button](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/media/macrobook-download.png)
@@ -33,14 +33,14 @@ Alternatively, copy the code for the individual macro directly from the .BAS fil
 9. Paste the text copied from the source into the Editor
 10. Click the Check icon in the toolbar
 11. Click the Save icon in the toolbar
-12. After the macro is saved then it can be mapped to a user tool, key, or key chord as usual (optional).
+12. After the macro is saved it can be mapped to a User Tool, Keymap, or Shortcut as usual (optional).
 Done!
 
 ## Setup
 After copying the macrobooks to `C:/Users/[your-name]/AppData/Roaming/OCLC/Connex/Macros/` you can set up your macros in ConnexionClient and map them to user tools.
 
 ### Create New User Profile
-When setting up the Connexion Client for the first time, users will need to create a new user profile. Users can do this using the 
+When setting up the Connexion Client for the first time, users will need to create a new user profile. CAT staff onsite at LSC can create NYPL or dual NYPL/BPL profiles by running the NewUserNYP or NewUserDual macro directly from the Macro window in the client. Users from other departments or CAT staff working offsite will not be able to create a profile using this process.
 
 ![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/media/manage-macros.png)
 
@@ -50,7 +50,7 @@ When setting up the Connexion Client for the first time, users will need to crea
 3. After selecting the macro, click run. 
 
 ### Mapping Macros to User Tools
-After setting up your user profile(s) you can map macros to shortcuts that on your toolbar.
+After setting up a user profile(s) users can map macros to shortcuts and add them to the toolbar.
 
 ![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/media/user-tools.png)
 
