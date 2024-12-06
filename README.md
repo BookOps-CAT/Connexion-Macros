@@ -3,7 +3,7 @@ A repository of BookOps Cataloging Department macros for the OCLC Connexion clie
 
 ## Installation
 ### Easy Way
-To install, find the macrobook you are interested in the [`Connexion-Macros/macrobooks/` folder](https://github.com/BookOps-CAT/Connexion-Macros/tree/main/macrobooks), click on it, and download it to your computer.
+If you have access to the CAT department shared drive (S: drive) you can find the macrobook files in S:/CATAL/Connex/macros and copy the files from there. Otherwise to install macros, find the macrobook you wish to install in the [`Connexion-Macros/macrobooks/` folder](https://github.com/BookOps-CAT/Connexion-Macros/tree/main/macrobooks), click on it, and download it to your computer.
 
 Example, downloading the `CAT macrobook` which includes UpdateExport, BackupSettings, and other macros:
 ![macrobook-download-button](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/media/macrobook-download.png)
@@ -33,8 +33,42 @@ Alternatively, copy the code for the individual macro directly from the .BAS fil
 9. Paste the text copied from the source into the Editor
 10. Click the Check icon in the toolbar
 11. Click the Save icon in the toolbar
-12. After the macro is saved then it can be mapped to a user tool, key, or key chord as usual (optional).
+12. After the macro is saved it can be mapped to a User Tool, Keymap, or Shortcut as usual (optional).
 Done!
+
+## Setup
+After copying the macrobooks to `C:/Users/[your-name]/AppData/Roaming/OCLC/Connex/Macros/` you can set up your macros in ConnexionClient and map them to user tools.
+
+### Create New User Profile
+When setting up the Connexion Client for the first time, users will need to create a new user profile. CAT staff onsite at LSC can create NYPL or dual NYPL/BPL profiles by running the NewUserNYP or NewUserDual macro directly from the Macro window in the client. Users from other departments or CAT staff working offsite will not be able to create a profile using this process. The gateway configuration file is `Connects.ini` and is available on the CATAL shared drive under `CATAL/Connex/onboarding/dual` or `CATAL/Connex/onboarding/nypl-only`.
+
+![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/media/manage-macros.png)
+
+
+1. Open Connexion and navigate to Tools > Macros > Manage
+2. Under CAT, you will see NewUserDual and NewUserNYP. Select the appropriate macro based on whether you will need profiles for both NYPL and BPL or just NYPL.
+3. After selecting the macro, click run. 
+
+### Mapping Macros to User Tools
+After setting up a profile users can map macros to shortcuts and add them to the toolbar.
+
+![user-tools](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/media/user-tools.png)
+
+1. Open Connexion and navigate to Tools > User Tools > Manage
+2. Select the Macro button at the top of the pop up window. A list of available macros should appear on the left side of the window.
+3. Select the macro you would like to assign from the list and select the user tool to map it to on the right. Click Assign Tool. Within the Cataloging Department macros are assigned to the following user tools:
+    - **UserTool 1**: CAT!UpdateExport
+    - **UserTool 2**: Brooklyn!CallNum
+    - **UserTool 3**: OCLC!Add33x
+    - **UserTool 4**: OCLC!Generate043
+    - **UserTool 5**: unassigned
+    - **UserTool 6**: OCLC!GenerateAuthorityRecord
+    - **UserTool 7**: unassigned
+    - **UserTool 8**: unassigned
+    - **UserTool 9**: NYPL!CallNum
+    - **UserTool 10**: Bookops!Utilities
+4. When finished assigning macros to user tools, click OK 
+5. These shortcuts can be added to the tool bar by navigating to Tools > Toolbar Editor. Scroll through the list until you find ToolsUserTools1. Click on the tool you would like to add and drag it to your tool bar. When finished click close.
 
 ## Macros
 1. [Bookops.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/Bookops.mbk)
