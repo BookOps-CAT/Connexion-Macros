@@ -1140,6 +1140,9 @@ Sub Diacritics(sNameTitle)
          'oe lower & uppercase
          Case Chr(182), Chr(166)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "oe" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
+        'th lower & uppercase   
+         Case Chr(180), Chr(164)
+            sNameTitle = Mid(sNameTitle, 1, i - 1) & "th" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i) 
          'l with slash upper & lowercase
          Case Chr(161), Chr(177)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "l" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
