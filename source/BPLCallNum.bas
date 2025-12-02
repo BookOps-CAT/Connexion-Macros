@@ -7,6 +7,8 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials
 
+'v.3.4.1 (11-04-2025):
+'  * Fixes the Icelandic thorn Chr(180), Chr(164) to 'th'
 'v.3.4.0 (11-04-2024):
 '  * removes ISBNs with "Kindle" qualifier
 '  * adds fill character (Chr(252)) to missing or invalid call number elements
@@ -1327,14 +1329,14 @@ AudnCheck:
       ElseIf sAudn = "j" Then
          MsgBox "INFO: Caution advised. Record coded as broad juvenile material (fixed field Audn: j)."
       Else
-         MsgBox "AUDIENCE conflict: Record not coded as eas material (fixed field Audn). Please verify your selection."
+         MsgBox "AUDIENCE conflict: Record not coded as easy material (fixed field Audn). Please verify your selection."
       End If
    Else
       If InStr("cdefgj", sAudn) <> 0 Or sAund = "" Then
          If InStr("cj", sAudn) <> 0 And sAudn <> "" Then
             If a = 0 Then
                If InStr(s082, "[E]") <> 0 And f <> 11 Then
-                  MsgBox "AUDIENCE conflict: The material is classed as eas fiction (082 field - [E]). Please verify your selection."
+                  MsgBox "AUDIENCE conflict: The material is classed as easy fiction (082 field - [E]). Please verify your selection."
                Else
                   Goto LitCheck
                End If
@@ -1400,7 +1402,7 @@ FormCheck:
       End If
    ElseIf f = 2 Or f = 3 Then
       If sRecType <> "a" And sRecType <> "i" Then
-         MsgBox "FORMAT conflict: bibliographical record type is not for language material or non-musical sound recordsing. Please verify your selection."
+         MsgBox "FORMAT conflict: bibliographical record type is not for language material or non-musical sound recording. Please verify your selection."
       End If
    ElseIf f = 4 Then
       If sRecType <> "j" Then
