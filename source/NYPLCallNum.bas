@@ -3,7 +3,8 @@
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 
-'v3.3.1 (11-4-2025): Fixes handling the Icelandic thorn character Chr(180), Chr(164) to 'th'
+'v3.3.1 (11-4-2025):
+'  * Fixes handling the Icelandic thorn character Chr(180), Chr(164) to 'th'
 'v3.3.0 (10-11-2024):
 '  * adds fill character (Chr(252)) in lieu of empty or digits in the cutter for non-visual materials (DVDs, BluRay)
 '  * fixes dotless i handling by replacing it with uppercase i
