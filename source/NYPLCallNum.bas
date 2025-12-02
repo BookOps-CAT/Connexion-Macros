@@ -3,9 +3,10 @@
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
 
+'v3.3.1 (11-4-2025): Fixes handling the Icelandic thorn character Chr(180), Chr(164) to 'th'
 'v3.3.0 (10-11-2024):
 '  * adds fill character (Chr(252)) in lieu of empty or digits in the cutter for non-visual materials (DVDs, BluRay)
-'  * fixes dotles i handling by replacing it with uppercase i
+'  * fixes dotless i handling by replacing it with uppercase i
 '  * fixes READALONG Sierra Material Type code (5)
 '  * adds handling of incorrectly coded characters in 100, 110, 245, and 6xx fields
 'v3.2.1 (02-06-2023):
@@ -1134,6 +1135,9 @@ Sub Diacritics(sNameTitle)
          'Ds
          Case Chr(179), Chr(163), Chr(186)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "d" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
+         'th lower & uppercase   
+         Case Chr(180), Chr(164)
+            sNameTitle = Mid(sNameTitle, 1, i - 1) & "th" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)    
          'ae lower & uppercase
          Case Chr(181), Chr(165)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "ae" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
@@ -1294,7 +1298,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecTyp
    
 
    'language prefix validation
-   'check if material is coded be in more then one language
+   'check if material is coded be in more than one language
    
    If s041 <> "" Then
    
