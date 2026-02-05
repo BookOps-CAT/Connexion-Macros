@@ -2,7 +2,10 @@
 'MacroDescription: NYPL macro for creating a complete call number in field 948 based on catalogers selected pattern and information coded in the record
 '                  Macro handles call number patterns for English and World Languages, fiction, non-fiction, biography and biography with Dewey
 '                  incorporates functions of Format macro - populates subfield $f 
-
+'v4.0.0 (02-05-2026):
+'  * removes WESTERN genre call number option
+'  * changes "SCI FI" to "SFF" genre prefix
+'  * adds HORROR genre call number option
 'v3.3.1 (11-4-2025):
 '  * Fixes handling the Icelandic thorn character Chr(180), Chr(164) to 'th'
 'v3.3.0 (10-11-2024):
@@ -190,9 +193,9 @@ Sub Main
          OptionButton  24,  175, 70, 14, "&FICTION"
          OptionButton  125,  55, 70, 14, "&MYSTERY"
          OptionButton  125,  75, 70, 14, "&ROMANCE"
-         OptionButton  125,  95, 70, 14, "&SCI FI"
+         OptionButton  125,  95, 70, 14, "&SCI-FI+FANTASY"
          OptionButton  125,  115, 70, 14, "&URBAN"
-         OptionButton  125,  135, 70, 14, "&WESTERN"
+         OptionButton  125,  135, 70, 14, "&HORROR"
          OptionButton  125,  155, 70, 14, "M&OVIE"
          OptionButton  125,  175, 70, 14, "&TV"
          DropListBox  18, 10, 61, 115, sFormat(), .sFormat
@@ -325,14 +328,14 @@ Sub Main
             sCallType = "rom"
             s948 = s948 & Chr(223) & "a ROMANCE"
          Case 9
-            sCallType = "sci"
-            s948 = s948 & Chr(223) & "a SCI FI"
+            sCallType = "sff"
+            s948 = s948 & Chr(223) & "a SFF"
          Case 10
             sCallType = "urb"
             s948 = s948 & Chr(223) & "a URBAN"
          Case 11
-            sCallType = "wes"
-            s948 = s948 & Chr(223) & "a WESTERN"
+            sCallType = "hor"
+            s948 = s948 & Chr(223) & "a HORROR"
          Case 12
             sCallType = "mov"
             s948 = s948 & Chr(223) & "a MOVIE"
@@ -415,7 +418,7 @@ Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
    End If
    
    'determine rule to apply
-   If InStr("eas,den,pic,fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+   If InStr("eas,den,pic,fic,mys,rom,sff,urb,hor", sCallType) <> 0 Then
       Goto Rule1
    ElseIf sCallType = "dew" Then
       Goto Rule2
@@ -426,7 +429,7 @@ Sub Rules(sElemArr, sCallType, sLang, sCutter, sNameChoice)
    End If
   
 Rule1:
-   'eas, den, fic, mys, pic, rom, urb, sci, wes: last name of author, first word of 110 or first letter of 245
+   'eas, den, fic, mys, pic, rom, urb, sff, hor: last name of author, first word of 110 or first letter of 245
    If Left(sMainEntry, 3) = "100" Then
       sMainEntry = Mid(sMainEntry, 6)
       Do While InStr(sMainEntry, ",")
@@ -1144,7 +1147,7 @@ Sub Diacritics(sNameTitle)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "oe" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
         'th lower & uppercase   
          Case Chr(180), Chr(164)
-            sNameTitle = Mid(sNameTitle, 1, i - 1) & "th" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i) 
+            sNameTitle = Mid(sNameTitle, 1, i - 1) & "th" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
          'l with slash upper & lowercase
          Case Chr(161), Chr(177)
             sNameTitle = Mid(sNameTitle, 1, i - 1) & "l" & Mid(sNameTitle, i + 1, Len(sNameTitle) - i)
@@ -1186,7 +1189,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecTyp
    If a = 0 Then
       If InStr("abcj", sAudn) = 0 Or sAudn = "" Then
          MsgBox "AUDIENCE conflict: Please check record fixed field coding and selected audience."
-      ElseIf InStr("mys,sci,rom,urb,wes", sCallType) <> 0 Then
+      ElseIf InStr("mys,sff,rom,urb,hor", sCallType) <> 0 Then
          MsgBox "AUDIENCE conflict: Juvenile material can not have genre call number."
       End If
    ElseIf a = 1 Then
@@ -1207,7 +1210,7 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecTyp
       End If
    ElseIf f = 1 Or f = 4 Then
       'format BlueRay or DVD
-      If InStr("eas,pic,fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+      If InStr("eas,pic,fic,mys,rom,sff,urb,hor", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       End If
       If sRecType <> "g" And sTMat <> "v" Then
@@ -1227,12 +1230,12 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecTyp
       'GRAPHIC
       If InStr(sCont, "6") = 0 Then
          MsgBox "FORMAT conflict: Please check record fixed field coding and selected format."
-      ElseIf InStr("eas,pic,mys,rom,sci,urb,wes,mov,tvs", sCallType) <> 0 Then
+      ElseIf InStr("eas,pic,mys,rom,sff,urb,hor,mov,tvs", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       End If
    ElseIf f = 7 Then
       'format HOLIDAY
-      If InStr("den,bio,mys,rom,sci,urb,wes,mov,tvs", sCallType) <> 0 Then
+      If InStr("den,bio,mys,rom,sff,urb,hor,mov,tvs", sCallType) <> 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
       ElseIf InStr("abcj", sAudn) = 0 Then
          MsgBox "FORMAT conflict: Please verify format selection and call number type."
@@ -1272,11 +1275,11 @@ Sub Validation(a, f, sAudn, sCallType, sCont, sCutter, sItemForm, sLang, sRecTyp
    'content validation
    If sRecType = "a" Then
       If InStr("1fj", sLitF) <> 0 Then
-         If InStr("eas,pic,fic,mys,rom,sci,urb,wes", sCallType) = 0 Then
+         If InStr("eas,pic,fic,mys,rom,sff,urb,hor", sCallType) = 0 Then
             MsgBox "LITERARY FORM conflict: Fixed field indicates the material is a work of fiction. Please verify your selection."
          End If
       Else
-         If InSTr("fic,mys,rom,sci,urb,wes", sCallType) <> 0 Then
+         If InSTr("fic,mys,rom,sff,urb,hor", sCallType) <> 0 Then
             MsgBox "LITERARY FORM conflict: Fixed field indicates the material is a non-fiction work. Please verify your selection."
          End If
       End If

@@ -7,9 +7,11 @@
 '                  added separation of cataloger's initials and code (pulled from a file instead)
 '                  overlay string supplied for World Language materials
 
-'v.3.4.1 (11-04-2025):
+'v3.4.2 (02-05-2026):
+'  * fixed a bug in Subject+Dewey call number option for 600 when the name consists only of the first name and is followed by a title or subtopic subdivision
+'v3.4.1 (11-04-2025):
 '  * Fixes the Icelandic thorn Chr(180), Chr(164) to 'th'
-'v.3.4.0 (11-04-2024):
+'v3.4.0 (11-04-2024):
 '  * removes ISBNs with "Kindle" qualifier
 '  * adds fill character (Chr(252)) to missing or invalid call number elements
 '  * sets Sierra bib format to 8 for READALONGS
@@ -776,6 +778,16 @@ Function Normalized(sNameTitle, sTag)
       End If
       If InStr(sNameTitle, Chr(223) & "v") Then
          place = InStr(sNameTitle, Chr(223) & "v")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "t") Then
+         place = InStr(sNameTitle, Chr(223) & "t")
+         sNameTitle = Left(sNameTitle, place-1)
+         sNameTitle = RTrim(sNameTitle)
+      End If
+      If InStr(sNameTitle, Chr(223) & "x") Then
+         place = InStr(sNameTitle, Chr(223) & "x")
          sNameTitle = Left(sNameTitle, place-1)
          sNameTitle = RTrim(sNameTitle)
       End If

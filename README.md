@@ -74,10 +74,10 @@ After setting up a profile users can map macros to shortcuts and add them to the
 1. [Bookops.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/Bookops.mbk)
 	* [Utilities.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/Utilities.bas): includes macro updater, single and dual profile creation, and Connexion settings backup and restore functions
 2. [Brooklyn.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/Brooklyn.mbk)
-	* [BPLCallNum.bas v3.4.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/BPLCallNum.bas): BPL call number creation macro
+	* [BPLCallNum.bas v3.4.2](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/BPLCallNum.bas): BPL call number creation macro
 	* [ToExcel.bas v1.2](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/BPLToExcel.bas): exports elements of displayed in the Connexion client record to the .xls format
 3. [NYPL.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/NYPL.mbk)
-	* [NYPLCallNum.bas v3.3.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/NYPLCallNum.bas): NYPL call number creation macro
+	* [NYPLCallNum.bas v4.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/NYPLCallNum.bas): NYPL call number creation macro
 	* [NYPLMusicCD.bas v1.5](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/NYPLMusicCD.bas): NYPL music CDs call number creation macro
 4. [CAT.mbk macrobook](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/macrobooks/CAT.mbk)
 	* [BackupSettings.bas v1.0.0](https://github.com/BookOps-CAT/Connexion-Macros/blob/main/source/CATBackupSettings.bas): backups Connexion client settings
