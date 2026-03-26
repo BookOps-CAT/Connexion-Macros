@@ -1,7 +1,8 @@
 'MacroName:Updater
 'MacroDescription:Synchronizes local macro books with those on the shared drive for both CAT and ACQ departments. Works with Connexion client 3.0 only
 'Macro modified by: Tomasz Kalata, BookOps
-'Last modified: March 4, 2022
+'Last modified: March 26, 2026
+'version 2.2 (2026-03-26): changed ACQ S:\ACQUI\Connex3macro to S:\ACQUI\Connex
 'version 2.1 (2022-03-04): removed support for client 2.6 and bug fixes
 
 Sub Main
@@ -27,11 +28,11 @@ Sub Main
 
       LocalFolder = Environ("APPDATA") & "\OCLC\Connex\Macros\"
       
-      If Dir("S:\CATAL\Connex\macros\") <> "" Then
-         RemoteFolder = "S:\CATAL\Connex\macros\"
+      If Dir("S:\CATAL\Connex\Macros\") <> "" Then
+         RemoteFolder = "S:\CATAL\Connex\Macros\"
          'MsgBox "Located macro backup directory at: " & RemoteFolder
-      ElseIf Dir("S:\ACQUI\Connex3macros\") <> "" Then
-         RemoteFolder = "S:\ACQUI\Connex3macros\"
+      ElseIf Dir("S:\ACQUI\Connex\Macros\") <> "" Then
+         RemoteFolder = "S:\ACQUI\Connex\Macros\"
          'MsgBox "Located macro backup directory at: " & RemoteFolder
       Else
          MsgBox "Unable to locate macro backup directory on your shared drive."
