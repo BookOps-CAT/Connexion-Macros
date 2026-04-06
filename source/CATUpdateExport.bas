@@ -1,7 +1,9 @@
 'MacroName:UpdateExport
 'MacroDescription:Updates OCLC holdings then exports a bibliographic record.
-'Version: 1.10
+'Version: 1.11
 
+'v1.11 (2026-04-06)
+'* fixes a bug for non-BookOps catalogers who use different codes in 949 than CATRL to correctly identify them as RL
 'v1.10 (2024-10-10)
 '  * adds export protection for incomplete call numbers that include a fill character (Chr(252))
 '  * adds barcode validation for NYPL RL and BL records
@@ -185,10 +187,10 @@ Sub Main
             Do While CS.GetField("949", n, sValue)
                If Mid(sValue, 5, 1) = "1" Then
             
-                  If InStr(sValue, "CATRL") <> 0 Then
-                     sCollection = "RL"
-                  Else
+                  If InStr(sValue, "CATBL") <> 0 Then
                      sCollection = "BL"
+                  Else
+                     sCollection = "RL"
                   End If
                   
                   lt = Mid(sValue, InStr(sValue, Chr(223) & "i") + 2)
@@ -290,7 +292,7 @@ Sub Main
          Wend
          MsgBox "Validation error: " + sErrorList
        Else
-         'MsgBox "Updating holdings and exporting..."
+         MsgBox "Updating holdings and exporting..."
          CS.UpdateHoldings
          CS.Export
        End If
