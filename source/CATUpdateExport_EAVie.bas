@@ -27,7 +27,9 @@
 '  + RDAFNM
 '  + TEPT
 
-'v1.0 2025-05-26
+'v1.1 2026-05-29
+'  * permits numerical and letters in the SPEC AMI ID (949 $n)
+'v1.0 2026-05-26
 '  * permits records without a barcode (ditital files)
 '  * valides digital barcode if present
 '  * validates other mandatory EAVie elements in item record (949 _ 1) such as SPEC ID and AEON eligibility
@@ -183,6 +185,10 @@ Function HasSpecId(sNote)
       
       If InStr(temp, Chr(9)) <> 0 Then
          temp = Trim(Left(temp, InStr(temp, Chr(9)) - 1))
+      End If
+      
+      If InStr(temp, "_") <> 0 Then
+         temp = Trim(Left(temp, InStr(temp, "_") - 1))
       End If
       
       If IsNumeric(temp) Then
