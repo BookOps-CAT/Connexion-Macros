@@ -27,6 +27,8 @@
 '  + RDAFNM
 '  + TEPT
 
+'v1.2 2026-07-23
+'  * fixes a bug to permit 949 without SPEC AMI ID but with barcode
 'v1.1 2026-05-29
 '  * permits numerical and letters in the SPEC AMI ID (949 $n)
 'v1.0 2026-05-26
@@ -39,7 +41,7 @@ Option Explicit
 
 Declare Sub CleanSubjectTags()
 Declare Function IsValidBarcode(sBarcode)
-Declare Function HasSpecId(sValue)
+Declare Function HasValidSpecId(sValue)
 Declare Function SubfieldValues(sSubfield, sValue)
 
 
@@ -161,11 +163,11 @@ Function IsValidBarcode(sBarcode)
 
    If Len(sBarcode) = 0 Then
       'EAVie item records do not require a barcode to be present
-      IsValidBarcode = TRUE
+      IsValidBarcode = "NULL"
    ElseIf Left(sBarcode, 4) = "3363" And Len(sBarcode) = 14 And IsNumeric(sBarcode) Then
-      IsValidBarcode = TRUE
+      IsValidBarcode = "TRUE"
    Else
-      IsValidBarcode = FALSE
+      IsValidBarcode = "FALSE"
    End If
 
 End Function
@@ -173,12 +175,12 @@ End Function
 
 '##############################
 
-Function HasSpecId(sNote)
+Function HasVAlidSpecId(sNote)
 
    Dim temp As String
 
    If InStr(sNote, "(SPEC AMI ID)") = 0 Then
-      HasSpecId = FALSE
+      HasValidSpecId = "NULL"
       GoTo Done
    Else
       temp = Trim(Mid(sNote, InStr(sNote, "(SPEC AMI ID)") + 13))
@@ -192,9 +194,9 @@ Function HasSpecId(sNote)
       End If
       
       If IsNumeric(temp) Then
-         HasSpecId = TRUE
+         HasValidSpecId = "TRUE"
       Else
-         HasSpecID = FALSE
+         HasValidSpecID = "FALSE"
       End If
 
    End If
@@ -209,7 +211,7 @@ Sub Main
    Dim CS As Object
    Set CS  = GetObject(,"Connex.Client")
 
-   Dim s949, sErrorList, sValue As String
+   Dim s949, sErrorList, sBarcodeElem, sNoteElem As String
    Dim nIndex, n, nNumErrors As Integer
 
    
@@ -222,22 +224,27 @@ Sub Main
          If Mid(s949, 5, 1) = "1" Then
            
             'validate barcode
-            sValue = SubfieldValues("i", s949)
-            If IsValidBarcode(sValue) = FALSE Then
+            sBarcodeElem = SubfieldValues("i", s949)
+            If IsValidBarcode(sBarcodeElem) = "FALSE" Then
                MsgBox "Invalid item barcode in the occurrence #" & n & " of the 949 field. Please correct and export again. Exiting..."
                GoTo Done
             End If
             
             'validate SPEC AMI ID
-            sValue = SubfieldValues("n", s949)
-            If HasSpecId(sValue) = False Then
-               MsgBox "Invalid of missing SPEC AMI ID in the occurence #" & n & " of the 949 field. Please correct and export again. Exiting..."
-            GoTo Done
+            sNoteElem = SubfieldValues("n", s949)
+            If HasValidSpecId(sNoteElem) = "FALSE" Then
+               MsgBox "Invalid SPEC AMI ID in the occurence #" & n & " of the 949 field. Please correct and export again. Exiting..."
+               GoTo Done
+            End If
+
+            If HasValidSpecId(sNoteElem) = "NULL" And IsValidBarcode(sBarcodeElem) = "NULL" Then
+               MsgBox "Item must have either SPEC AMI ID or barcode in the occurence #" & n & " of the 949 field. Please correct and export again. Exiting..."
+               GoTo Done
             End If
             
             'validate AEON note present
-            sValue = SubfieldValues("n", s949)
-            If InStr(sValue, "AEON eligible") = 0 Then
+            sNoteElem = SubfieldValues("n", s949)
+            If InStr(sNoteElem, "AEON eligible") = 0 Then
                MsgBox "Missing required AEON eligibility note in the occurence #" & n & "of the 949 field. Please correect and export egain. Exiting..."            
                GoTo Done
             End If
